@@ -1,0 +1,9 @@
+ToDo:  (PI Module)
+
+
+Change logs to send logs at the right place.
+Test to see if we are getting the temperature.. 
+create method to send data to web server.   --. done
+Re-do the SD card for the raspberry pi with the new image.
+stored current temperature for restarts.. Done!!!
+Create service for piclock to get the current temp.  https://stackoverflow.com/questions/39343021/how-to-turn-my-jersey-rest-api-into-an-executable-jar  DONE!!
