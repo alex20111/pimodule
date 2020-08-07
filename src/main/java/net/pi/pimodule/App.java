@@ -37,8 +37,10 @@ public class App {
 		
 		
 		long sampleRate = 1000 * 60 * 5; // 5 min
-		logger.info("Starting temperature with sample rate: " + sampleRate);
+		logger.info("Starting temperature with sample rate: " + sampleRate + " in millis. In min: " + ( (sampleRate /1000) / 60) );
 		tm.startTemperature(sampleRate);
+		
+		
 		
 
         String port = System.getenv("PORT");

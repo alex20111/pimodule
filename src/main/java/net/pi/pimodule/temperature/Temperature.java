@@ -11,7 +11,7 @@ import net.pi.pimodule.db.TempEntity;
 public class Temperature {
 
 	private static final Logger logger = LogManager.getLogger(Temperature.class);
-	private SimpleDateFormat sdf = new SimpleDateFormat("HH:mm.ss");
+	private SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
 
 	private  String tempSun = "-99";
 	private  String tmpSunUpdDt = "21:45am";

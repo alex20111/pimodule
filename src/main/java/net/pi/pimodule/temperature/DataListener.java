@@ -182,6 +182,7 @@ public class DataListener implements SerialDataEventListener
 			//if everything is fine write to db
 			if (temp != null)
 			{
+				
 //				new TempManager().addTemperature(temp);   //TODO
 				//AA = Shade, BB = SUN, Pool = POOl 
 				temperature.setProperties(temp);

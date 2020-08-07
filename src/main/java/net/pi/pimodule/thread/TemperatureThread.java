@@ -34,7 +34,7 @@ public class TemperatureThread implements Runnable{
 		tempListener.startTempLogger();
 
 		Client client = ClientBuilder.newClient();
-		webTarget = client.target("https://www.boudreault.xyz/webservice/webapi"); 
+		webTarget = client.target("https://www.boudreault.xyz/bwservice/webapi"); 
 	}
 
 	public void run() {
@@ -42,8 +42,7 @@ public class TemperatureThread implements Runnable{
 
 		try {
 			Temperature t = tempListener.getTemp();
-//			Temperature t = getDummytemp();
-
+			
 			if (t != null) {
 				logger.info("Temperature info, sending: " + t);
 				if (needToLogIn) {
@@ -78,7 +77,7 @@ public class TemperatureThread implements Runnable{
 
 		User u = response.readEntity(User.class);
 
-		System.out.println("Got user: " + u);
+		logger.info("Logged in with user: " + u);
 		needToLogIn = false;
 
 		return u.getAuthToken();
