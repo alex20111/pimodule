@@ -1,5 +1,7 @@
 package net.pi.pimodule.temperature;
 
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 
 import org.apache.logging.log4j.LogManager;
@@ -12,6 +14,7 @@ public class Temperature {
 
 	private static final Logger logger = LogManager.getLogger(Temperature.class);
 	private SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
+	private NumberFormat formatter = new DecimalFormat("#0.#");
 
 	private  String tempSun = "-99";
 	private  String tmpSunUpdDt = "21:45am";
@@ -31,18 +34,17 @@ public class Temperature {
 
 		if (rec == TempRecName.Pool) {
 			this.tmpPoolUpdDt = sdf.format(t.getRecordedDate());
-			this.tempPool = String.valueOf(t.getTempC());
+			this.tempPool = (t.getTempC() != null ? formatter.format(Double.valueOf(t.getTempC())) : "-90" );
 
 		}else if (rec == TempRecName.BB) {
 
 			this.tmpSunUpdDt = sdf.format(t.getRecordedDate());
-			this.tempSun = String.valueOf(t.getTempC());
+			this.tempSun = (t.getTempC() != null ? formatter.format(Double.valueOf(t.getTempC())) : "-90" );
 
 		}else if (rec == TempRecName.AA) {
 
 			this.tmpShadeUpdDt = sdf.format(t.getRecordedDate());
-			this.tempShade = String.valueOf(t.getTempC());
-
+			this.tempShade = (t.getTempC() != null ? formatter.format(Double.valueOf(t.getTempC())) : "-90" );
 		}
 	}
 	public String getTempSun() {

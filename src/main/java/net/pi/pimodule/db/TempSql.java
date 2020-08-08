@@ -64,7 +64,7 @@ public class TempSql {
 
 	public TempEntity findCurrentTemp(DBConnection con, String recName) throws SQLException {
 
-		logger.debug("findCurrentTemp: " + recName);
+//		logger.debug("findCurrentTemp: " + recName);
 		
 		TempEntity ent = null;
 
@@ -83,8 +83,7 @@ public class TempSql {
 
 	}
 	public int addTemp(DBConnection con, TempEntity temp) throws SQLException {
-		logger.debug("add temperature");
-		System.out.println("--add--");
+//		logger.debug("add temperature");
 
 		int pk = con.buildAddQuery(TempEntity.TBL_NAME)
 				.setParameter(TempEntity.BATT_LVL, temp.getBatteryLevel())
