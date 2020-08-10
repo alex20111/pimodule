@@ -78,9 +78,6 @@ public class TempSerialListener {
     
 	}
 	
-	public Temperature getTemp() {
-		return dl.getTemperature();
-	}
 	
 	public void stopTempLogger() throws IllegalStateException, IOException{
 		if (serial != null && serial.isOpen() ){

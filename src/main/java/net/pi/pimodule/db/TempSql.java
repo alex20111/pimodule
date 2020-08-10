@@ -97,8 +97,8 @@ public class TempSql {
 	}
 
 	public void updateTemp(DBConnection con, TempEntity temp) throws SQLException {
-		logger.debug("Update temperature");
-		System.out.println("--upd--");
+//		logger.debug("Update temperature");
+//		System.out.println("--upd--");
 
 		int upd = con.buildUpdateQuery(TempEntity.TBL_NAME)
 				.setParameter(TempEntity.BATT_LVL, temp.getBatteryLevel())
@@ -110,7 +110,7 @@ public class TempSql {
 	}
 
 	public void saveTemperature(TempEntity entity) throws ClassNotFoundException, SQLException {
-		logger.debug("Saving temp : " + entity);
+		logger.debug("Saving temp on database : " + entity);
 
 		DBConnection con = null;
 		try {
@@ -157,7 +157,7 @@ public class TempSql {
 			if (BB != null) {
 				temp.setProperties(BB);
 			}
-			TempEntity pool = findCurrentTemp(con, TempRecName.Pool.name());
+			TempEntity pool = findCurrentTemp(con, TempRecName.pool.name());
 			if (pool != null) {
 				temp.setProperties(pool);
 			}

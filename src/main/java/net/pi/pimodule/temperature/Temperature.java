@@ -12,7 +12,7 @@ import net.pi.pimodule.db.TempEntity;
 
 public class Temperature {
 
-	private static final Logger logger = LogManager.getLogger(Temperature.class);
+//	private static final Logger logger = LogManager.getLogger(Temperature.class);
 	private SimpleDateFormat sdf = new SimpleDateFormat("HH:mm");
 	private NumberFormat formatter = new DecimalFormat("#0.#");
 
@@ -32,7 +32,7 @@ public class Temperature {
 	public void setProperties(TempEntity t) {
 		TempRecName rec = TempRecName.valueOf(t.getRecorderName());
 
-		if (rec == TempRecName.Pool) {
+		if (rec == TempRecName.pool) {
 			this.tmpPoolUpdDt = sdf.format(t.getRecordedDate());
 			this.tempPool = (t.getTempC() != null ? formatter.format(Double.valueOf(t.getTempC())) : "-90" );
 

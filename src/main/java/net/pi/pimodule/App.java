@@ -1,9 +1,10 @@
 package net.pi.pimodule;
 
-import org.apache.catalina.Context;
-import org.apache.catalina.startup.Tomcat;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.servlet.ServletHolder;
 import org.glassfish.jersey.servlet.ServletContainer;
 
 import net.pi.pimodule.service.model.JerseyConfiguration;
@@ -41,26 +42,28 @@ public class App {
 		tm.startTemperature(sampleRate);
 		
 		
-		
+		  Server server = new Server(8081);
 
-        String port = System.getenv("PORT");
-        if (port == null || port.isEmpty()) {
-            port = "8080";
-        }
+	        ServletContextHandler ctx = 
+	                new ServletContextHandler(ServletContextHandler.NO_SESSIONS);
+	                
+	        ctx.setContextPath("/");
+	        server.setHandler(ctx);
 
-        String contextPath = "";
-        String appBase = ".";
+	        ServletHolder serHol = ctx.addServlet(ServletContainer.class, "/api/*");
+	        serHol.setInitOrder(1);
+	        serHol.setInitParameter("jersey.config.server.provider.packages", 
+	                "net.pi.pimodule.service");
 
-        Tomcat tomcat = new Tomcat();
-        tomcat.setPort(Integer.valueOf(port));
-        tomcat.getHost().setAppBase(appBase);
+	        try {
+	            server.start();
+	            server.join();
+	        } catch (Exception ex) {
+	        	ex.printStackTrace();
+//	            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+	        } finally {
 
-        Context context = tomcat.addContext(contextPath, appBase);
-        Tomcat.addServlet(context, JERSEY_SERVLET_NAME,
-                new ServletContainer(new JerseyConfiguration()));
-        context.addServletMappingDecoded("/api/*", JERSEY_SERVLET_NAME);
-
-        tomcat.start();
-        tomcat.getServer().await();
-    }
+	            server.destroy();
+	        }
+    } //relaxedQueryChars="[]|{}^&#x5c;&#x60;&quot;&lt;&gt;"
 }

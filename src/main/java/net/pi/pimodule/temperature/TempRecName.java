@@ -2,7 +2,7 @@ package net.pi.pimodule.temperature;
 
 public enum TempRecName {
 
-	AA("AA"), BB("BB"), Pool("Pool");
+	AA("AA"), BB("BB"), pool("Pool");
 	
 	private String recorderName;
 	

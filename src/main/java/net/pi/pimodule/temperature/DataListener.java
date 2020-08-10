@@ -1,6 +1,5 @@
 package net.pi.pimodule.temperature;
 
-import java.sql.SQLException;
 import java.util.Date;
 
 import org.apache.logging.log4j.LogManager;
@@ -9,6 +8,7 @@ import org.apache.logging.log4j.Logger;
 import com.pi4j.io.serial.SerialDataEvent;
 import com.pi4j.io.serial.SerialDataEventListener;
 
+import net.pi.pimodule.common.TemperatureHandler;
 import net.pi.pimodule.db.TempEntity;
 import net.pi.pimodule.db.TempSql;
 
@@ -33,24 +33,25 @@ public class DataListener implements SerialDataEventListener
 	public static String storage 		= "";
 	public static Date 	sigReceivedDt	= null;
 	
-	private Temperature temperature = null;
+//	private Temperature temperature = null;
 	
 	public DataListener()
 	{
 		logger.info("Listener started");
 		sigReceivedDt = new Date();
 		
-		try {
-			temperature = new TempSql().getCurrentStoredTemperature();
-		} catch (SQLException | ClassNotFoundException e) {
-			logger.error("error in getting old temperature" , e);
-		} 
-		
-		if (temperature == null) {
-			temperature = new Temperature();
-		}
-		
-		logger.info("Last temperature from DB: " + temperature);
+//		try {
+//			Temperature temperature = new TempSql().getCurrentStoredTemperature();
+//			TemperatureHandler.getInstance().set
+//		} catch (SQLException | ClassNotFoundException e) {
+//			logger.error("error in getting old temperature" , e);
+//		} 
+//		
+////		if (temperature == null) {
+////			temperature = new Temperature();
+////		}
+//		
+//		logger.info("Last temperature from DB: " + temperature);
 	}
 	
 	/**
@@ -185,7 +186,9 @@ public class DataListener implements SerialDataEventListener
 				
 //				new TempManager().addTemperature(temp);   //TODO
 				//AA = Shade, BB = SUN, Pool = POOl 
-				temperature.setProperties(temp);
+//				temperature.setProperties(temp);
+				TemperatureHandler th = TemperatureHandler.getInstance();
+				th.setTemperature(temp);
 				new TempSql().saveTemperature(temp);
 				
 			}
@@ -216,9 +219,9 @@ public class DataListener implements SerialDataEventListener
 		}
 	}
 	
-	public Temperature getTemperature() {
-		return this.temperature;
-	}
+//	public Temperature getTemperature() {
+//		return this.temperature;
+//	}
 
 }
 

@@ -14,6 +14,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import net.pi.pimodule.User;
+import net.pi.pimodule.common.TemperatureHandler;
 import net.pi.pimodule.temperature.TempSerialListener;
 import net.pi.pimodule.temperature.Temperature;
 
@@ -26,6 +27,7 @@ public class TemperatureThread implements Runnable{
 	private String token = "";
 
 	private WebTarget webTarget;
+
  /**
   * Clas that will push the temperature data to the server.. 
   */
@@ -38,13 +40,13 @@ public class TemperatureThread implements Runnable{
 	}
 
 	public void run() {
-		logger.debug("Temperature thread sampling at: " + new Date());
+		logger.debug("--> Temperature thread sampling at: " + new Date());
 
 		try {
-			Temperature t = tempListener.getTemp();
+			Temperature t = TemperatureHandler.getInstance().getTemperature(); //tempListener.getTemp();
 			
 			if (t != null) {
-				logger.info("Temperature info, sending: " + t);
+				logger.info("--> Temperature thread  info, sending: " + t);
 				if (needToLogIn) {
 					token = login(webTarget);
 				}
@@ -98,11 +100,5 @@ public class TemperatureThread implements Runnable{
 
 	}
 	
-	private Temperature getDummytemp() {
-		Temperature t = new Temperature();
-		
-		t.setTempSun("983");
-		return t;
-	}
 
 }
