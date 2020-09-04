@@ -45,7 +45,7 @@ public class PoolService {
 
 			if (decodedString != null && decodedString.length() > 0) {
 				String temp = decodedString.substring(  decodedString.indexOf("tempC") + 7, decodedString.indexOf("recorderName") - 2  );
-
+//				logger.debug("temp: " + temp);
 				if (temp.length() > 0) {			
 
 					TempEntity te = new TempEntity();
