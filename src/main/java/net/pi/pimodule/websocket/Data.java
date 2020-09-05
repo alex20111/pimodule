@@ -3,6 +3,7 @@ package net.pi.pimodule.websocket;
 public class Data {
     public static final int IDENTIFICATION = 1;
     public static final int GARAGE_FUNCTION = 2;
+    public static final int HEART_BEAT     = 20;
     public static final int TERMINATE_SESSION = 99;
     
     

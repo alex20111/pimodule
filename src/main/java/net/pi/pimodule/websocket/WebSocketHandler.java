@@ -6,20 +6,12 @@ import java.util.List;
 
 import javax.websocket.Session;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 
-
-
-
-
-//{
-//	  "operation": 1,
-//	  "user": {
-//	    "username": "alice",
-//	    "password": "123456"
-//	  }
-//	}
 
 
 // {
@@ -28,8 +20,8 @@ import com.google.gson.JsonSyntaxException;
 //}
 
 public class WebSocketHandler {
-
-
+	private static final Logger logger = LogManager.getLogger(WebSocketHandler.class);
+	
 	private static WebSocketHandler instance;
 
 	private List<UserSession> userSessions = new ArrayList<UserSession>();
@@ -48,23 +40,27 @@ public class WebSocketHandler {
 		try {
 			data =  gson.fromJson(message, Data.class);
 		}catch (JsonSyntaxException jse) {
-			jse.printStackTrace();
+			logger.error("Error in JSON: ", jse);
 		}
 
 		if (data.operation == Data.IDENTIFICATION) {
-			System.out.println("Add data: " + data);
+			logger.debug("Add Identifier: " + data);
 			addUser(session, data.userName);
 		}else if (data.operation == Data.GARAGE_FUNCTION){
-			System.out.println("garage");
+			logger.debug("garage info recieved: "+  data);
 			//get garage status and send to all websoceets registered.
 			for(UserSession u: userSessions) {
-				System.out.println("Name: " + u.getUserName());
-				u.SendData("hi " + u.getUserName() + " i got the following info: " + data.garageDoorStatus);
+				logger.debug("Sending to: " + u.getUserName());
+				u.SendData( "{ \"garageStatus\" : " +  data.garageDoorStatus + "}");
 			}
 		}else if(data.operation == Data.TERMINATE_SESSION) {
-			System.out.println("Teminating session : " + session.getId());
+			logger.debug("Teminating session : " + session.getId());
 			session.close();
-		}else {
+		}else if (data.operation == Data.HEART_BEAT) {
+			logger.info("Heart beat from: " + session.getId());
+		}
+		else {
+			logger.info("Unknown command: " + session.getId());
 			session.getBasicRemote().sendText("Error, unknown command, terminating session");
 			session.close();
 		}
@@ -74,11 +70,10 @@ public class WebSocketHandler {
 	public void processOnClose(Session session) {
 		UserSession us = userSessions.stream().filter(u-> u.getSession().getId().equals(session.getId())).findAny().orElse(null);
 
-		if (us != null) {
-			System.out.println("User session size before: " +userSessions.size());
+		if (us != null) {			
 			userSessions.remove(us);
-			System.out.println("User session size: " +userSessions.size());
 		}
+		logger.debug("processing on close. User pool: " + userSessions.size() );
 	}
 
 
@@ -100,9 +95,5 @@ public class WebSocketHandler {
 
 
 	}
-
-
-
-
 
 }
