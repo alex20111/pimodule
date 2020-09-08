@@ -21,11 +21,12 @@ import com.google.gson.JsonSyntaxException;
 
 public class WebSocketHandler {
 	private static final Logger logger = LogManager.getLogger(WebSocketHandler.class);
-	
+
 	private static WebSocketHandler instance;
 
 	private List<UserSession> userSessions = new ArrayList<UserSession>();
 	private Gson gson = new Gson();
+	private int lastGarageStatus = -1; //garage status
 
 	public static WebSocketHandler getInstance() {
 		if (instance == null) {
@@ -48,16 +49,20 @@ public class WebSocketHandler {
 			addUser(session, data.userName);
 		}else if (data.operation == Data.GARAGE_FUNCTION){
 			logger.debug("garage info recieved: "+  data);
+			//save last garage status
+			this.lastGarageStatus = data.garageDoorStatus;
 			//get garage status and send to all websoceets registered.
 			for(UserSession u: userSessions) {
 				logger.debug("Sending to: " + u.getUserName());
-				u.SendData( "{ \"garageStatus\" : " +  data.garageDoorStatus + "}");
+				u.SendData(  formatGarageStatus(data.garageDoorStatus));//"{ \"garageStatus\" : " +  data.garageDoorStatus + "}");
 			}
 		}else if(data.operation == Data.TERMINATE_SESSION) {
 			logger.debug("Teminating session : " + session.getId());
 			session.close();
 		}else if (data.operation == Data.HEART_BEAT) {
 			logger.info("Heart beat from: " + session.getId());
+		}else if (data.operation == Data.FETCH_GARAGE_STATUS) {
+			sendLastGarageStatus(session);
 		}
 		else {
 			logger.info("Unknown command: " + session.getId());
@@ -80,20 +85,31 @@ public class WebSocketHandler {
 	private void addUser(Session session, String userName) throws IOException {
 
 		//check if user exist, if exist.. remove and replace session
-
 		UserSession us = userSessions.stream().filter(u -> u.getUserName().equals(userName)).findAny().orElse(null);
 
 		if (us != null) {
 			us.setSession(session);
-			us.SendData("User exist.. replacing" );
+			us.SendData("User exist.. Updated" );
+			logger.info("User exist.. Updated: " + userName + "  UserPool: " + userSessions.size());
 		}else {
-			System.out.println("Adding new user: " + userName);
+			logger.info("Adding new user: " + userName+ "  UserPool: " + userSessions.size());
 			UserSession u = new UserSession(session, userName);
 
 			userSessions.add(u);
 		}
-
+		
 
 	}
 
+	private void sendLastGarageStatus(Session session) {
+		logger.debug("Sending garage status of " + this.lastGarageStatus + " to session id: " + session.getId());
+		try {
+			session.getBasicRemote().sendText(formatGarageStatus(this.lastGarageStatus));
+		} catch (IOException e) {
+			logger.error("Error trying to send data" , e);
+		}
+	}
+	private String formatGarageStatus(int status) {
+		return "{ \"garageStatus\" : " +  status + "}";
+	}
 }
