@@ -22,6 +22,8 @@ public class Temperature {
 	private  String tmpShadeUpdDt = "10:45am";
 	private  String tempPool = "-99";
 	private  String tmpPoolUpdDt = "11:45am";
+	
+	//TODO temperature others? in a map? or re-define to have a list of object?  or keep this as legacy and create a new list of object for the new added temperature.
 
 	public Temperature() {}
 	public Temperature(TempEntity t) {		

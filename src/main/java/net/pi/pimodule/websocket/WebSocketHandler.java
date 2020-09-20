@@ -66,7 +66,7 @@ public class WebSocketHandler {
 		}
 		else {
 			logger.info("Unknown command: " + session.getId());
-			session.getBasicRemote().sendText("Error, unknown command, terminating session");
+			session.getBasicRemote().sendText("{ \"Error\": \"unknown command, terminating session\"}");
 			session.close();
 		}
 
@@ -89,13 +89,12 @@ public class WebSocketHandler {
 
 		if (us != null) {
 			us.setSession(session);
-			us.SendData("User exist.. Updated" );
+			us.SendData("{\"User\": \"User exist.. Updated\"}" );
 			logger.info("User exist.. Updated: " + userName + "  UserPool: " + userSessions.size());
-		}else {
-			logger.info("Adding new user: " + userName+ "  UserPool: " + userSessions.size());
+		}else {			
 			UserSession u = new UserSession(session, userName);
-
 			userSessions.add(u);
+			logger.info("Adding new user: " + userName+ "  UserPool: " + userSessions.size());
 		}
 		
 
