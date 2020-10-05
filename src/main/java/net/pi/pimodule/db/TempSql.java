@@ -4,27 +4,32 @@ import java.io.IOException;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import home.common.data.Temperature;
+import home.common.data.Temperature.TempRecName;
 import home.db.ColumnType;
 import home.db.DBConnection;
 import home.db.Database;
 import home.db.DbClass;
 import home.db.PkCriteria;
 import net.pi.pimodule.common.Constants;
-import net.pi.pimodule.temperature.TempRecName;
-import net.pi.pimodule.temperature.Temperature;
 
 
 public class TempSql {
 
 	private static final Logger logger = LogManager.getLogger(TempSql.class);
-
 
 
 	public void createTable() throws IOException, SQLException, ClassNotFoundException {
@@ -64,8 +69,8 @@ public class TempSql {
 
 	public TempEntity findCurrentTemp(DBConnection con, String recName) throws SQLException {
 
-//		logger.debug("findCurrentTemp: " + recName);
-		
+		//		logger.debug("findCurrentTemp: " + recName);
+
 		TempEntity ent = null;
 
 		ResultSet rs = con.createSelectQuery("SELECT * FROM " + TempEntity.TBL_NAME + " WHERE " + TempEntity.REC_NAME + " = :recName" )
@@ -83,7 +88,7 @@ public class TempSql {
 
 	}
 	public int addTemp(DBConnection con, TempEntity temp) throws SQLException {
-//		logger.debug("add temperature");
+		//		logger.debug("add temperature");
 
 		int pk = con.buildAddQuery(TempEntity.TBL_NAME)
 				.setParameter(TempEntity.BATT_LVL, temp.getBatteryLevel())
@@ -97,8 +102,8 @@ public class TempSql {
 	}
 
 	public void updateTemp(DBConnection con, TempEntity temp) throws SQLException {
-//		logger.debug("Update temperature");
-//		System.out.println("--upd--");
+		//		logger.debug("Update temperature");
+		//		System.out.println("--upd--");
 
 		int upd = con.buildUpdateQuery(TempEntity.TBL_NAME)
 				.setParameter(TempEntity.BATT_LVL, temp.getBatteryLevel())
@@ -151,15 +156,27 @@ public class TempSql {
 
 			TempEntity AA = findCurrentTemp(con, TempRecName.AA.name());
 			if (AA != null) {
-				temp.setProperties(AA);
+				setTempProperties(temp,AA);
 			}
 			TempEntity BB = findCurrentTemp(con, TempRecName.BB.name());
 			if (BB != null) {
-				temp.setProperties(BB);
+				setTempProperties(temp,BB);
 			}
 			TempEntity pool = findCurrentTemp(con, TempRecName.pool.name());
 			if (pool != null) {
-				temp.setProperties(pool);
+				setTempProperties(temp,pool);
+			}
+			//add new
+			for(TempRecName r : TempRecName.getNewSensors()) {
+				TempEntity tempSensor = findCurrentTemp(con, r.name());
+
+				if (tempSensor != null) {
+					Map<TempRecName, String> dt = temp.getTempDateMap();
+					dt.put(r, temp.raw().format(tempSensor.getRecordedDate() ));
+
+					Map<TempRecName, String> tempMap = temp.getTempMap();
+					tempMap.put(r, tempSensor.getTempC());
+				}
 			}
 
 		}finally {
@@ -178,12 +195,31 @@ public class TempSql {
 		//				return  new DBConnection(Constants.DB_MYSQL, Constants.DB_USER, Constants.DB_PASS, DbClass.Mysql );
 		//		return new DBConnec.tion(db);
 	}
-	
+
+	//
+	public void setTempProperties(Temperature temp, TempEntity t) {
+		TempRecName rec = TempRecName.valueOf(t.getRecorderName());
+
+		if (rec == TempRecName.pool) {
+			temp.setTmpPoolUpdDt(temp.sdf().format(t.getRecordedDate()));
+			temp.setTempPool( (t.getTempC() != null ? temp.tempFormat().format(Double.valueOf(t.getTempC())) : "-90" ) );
+
+		}else if (rec == TempRecName.BB) {
+
+			temp.setTmpSunUpdDt(temp.sdf().format(t.getRecordedDate()));
+			temp.setTempSun(t.getTempC() != null ? temp.tempFormat().format(Double.valueOf(t.getTempC())) : "-90" );
+
+		}else if (rec == TempRecName.AA) {
+
+			temp.setTmpShadeUpdDt(temp.sdf().format(t.getRecordedDate()));
+			temp.setTempShade(t.getTempC() != null ? temp.tempFormat().format(Double.valueOf(t.getTempC())) : "-90" );
+		}
+	}
 	public static void main (String args[]) throws ClassNotFoundException, SQLException, IOException {
-		
+
 		TempSql sql = new TempSql();
 		sql.createTable();
-		
+
 		System.out.println("Get current stored temp");
 		Temperature t1 = sql.getCurrentStoredTemperature();
 		System.out.println("Stored temp: " + t1);
@@ -192,11 +228,11 @@ public class TempSql {
 		ent1.setRecordedDate(new Date());
 		ent1.setRecorderName(TempRecName.BB.name());
 		ent1.setTempC("33.5");
-		
+
 		sql.saveTemperature(ent1);
 		t1 = sql.getCurrentStoredTemperature();
 		System.out.println("Stored temp 2 : " + t1);
-		
+
 		System.out.println("BB record");
 		ent1 = new TempEntity();
 		ent1.setRecordedDate(new Date());
@@ -205,8 +241,8 @@ public class TempSql {
 		sql.saveTemperature(ent1);
 		t1 = sql.getCurrentStoredTemperature();
 		System.out.println("Stored temp 3 : " + t1);
-		
-		
+
+
 		System.out.println("AA record");
 		ent1 = new TempEntity();
 		ent1.setRecordedDate(new Date());
@@ -215,6 +251,6 @@ public class TempSql {
 		sql.saveTemperature(ent1);
 		t1 = sql.getCurrentStoredTemperature();
 		System.out.println("Stored temp 4 : " + t1);
-		
+
 	}
 }

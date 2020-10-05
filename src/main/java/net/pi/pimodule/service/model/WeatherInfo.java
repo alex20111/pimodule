@@ -2,7 +2,7 @@ package net.pi.pimodule.service.model;
 
 import java.util.List;
 
-import net.pi.pimodule.temperature.Temperature;
+import home.common.data.Temperature;
 
 public class WeatherInfo {
 	

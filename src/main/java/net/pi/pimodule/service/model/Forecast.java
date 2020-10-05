@@ -5,6 +5,7 @@ public class Forecast {
 	private String dayOfWeek = "";	
 	private String forecast = "";
 	private String uvIndex = "";
+	private String weather = "";
 	
 	public String getForecast() {
 		return forecast;
@@ -23,6 +24,12 @@ public class Forecast {
 	}
 	public void setUvIndex(String uvIndex) {
 		this.uvIndex = uvIndex;
+	}
+	public String getWeather() {
+		return weather;
+	}
+	public void setWeather(String weather) {
+		this.weather = weather;
 	}
 	
 	

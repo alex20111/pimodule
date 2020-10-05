@@ -13,10 +13,10 @@ import javax.ws.rs.core.Response;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import home.common.data.Temperature;
 import net.pi.pimodule.User;
 import net.pi.pimodule.common.TemperatureHandler;
 import net.pi.pimodule.temperature.TempSerialListener;
-import net.pi.pimodule.temperature.Temperature;
 
 public class TemperatureThread implements Runnable{
 
@@ -97,6 +97,7 @@ public class TemperatureThread implements Runnable{
 			//this means we need to re-login
 			needToLogIn = true;
 		}
+		logger.debug("Response token: " +resp);
 
 	}
 	

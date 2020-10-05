@@ -15,12 +15,12 @@ import javax.ws.rs.core.Response.Status;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import home.common.data.Temperature;
 import net.pi.pimodule.db.TempSql;
 import net.pi.pimodule.service.model.Forecast;
 import net.pi.pimodule.service.model.Message;
 import net.pi.pimodule.service.model.WeatherAlert;
 import net.pi.pimodule.service.model.WeatherInfo;
-import net.pi.pimodule.temperature.Temperature;
 import net.weather.action.WeatherAction;
 import net.weather.bean.WeatherCurrentModel;
 import net.weather.bean.WeatherForecastModel;
@@ -103,6 +103,7 @@ public class TemperatureService {
 					forecast.setForecast(f.getForecast());
 					forecast.setDayOfWeek(f.getDayOfWeek());
 					forecast.setUvIndex(f.getUvIndex());
+					forecast.setWeather(f.getWeatherOutlook().trim());
 					forecasts.add(forecast);
 				});
 
@@ -141,11 +142,9 @@ public class TemperatureService {
 				msg = new Message("Input Parm Incorrect", "No valid input parm provided. Missing env can or localsensor switch. Env can key: " + key + "   --  Local Sensor: " + localSensor);
 			}
 
-
-
 		}catch(Exception ex) {
 			logger.error("error in service: " , ex);
-			status = Status.OK;
+			status = Status.INTERNAL_SERVER_ERROR;
 			msg = new Message("Invalid", "Error in forecast: " + ex.getMessage());
 		}
 

@@ -2,13 +2,13 @@ package net.pi.pimodule.common;
 
 import java.sql.SQLException;
 
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import home.common.data.Temperature;
+import home.common.data.Temperature.TempRecName;
 import net.pi.pimodule.db.TempEntity;
 import net.pi.pimodule.db.TempSql;
-import net.pi.pimodule.temperature.Temperature;
 
 public class TemperatureHandler {
 	
@@ -48,10 +48,28 @@ public class TemperatureHandler {
 	}
 
 	public synchronized  void setTemperature(TempEntity t) {
-		this.temperature.setProperties(t);
 		
+//		this.temperature.setProperties(t);
+		TempRecName rec = TempRecName.valueOf(t.getRecorderName());
+
+		if (rec == TempRecName.pool) {
+			this.temperature.setTmpPoolUpdDt(this.temperature.sdf().format(t.getRecordedDate()));
+			this.temperature.setTempPool( (t.getTempC() != null ? this.temperature.tempFormat().format(Double.valueOf(t.getTempC())) : "-90" ) );
+
+		}else if (rec == TempRecName.BB) {
+
+			this.temperature.setTmpSunUpdDt(this.temperature.sdf().format(t.getRecordedDate()));
+			this.temperature.setTempSun(t.getTempC() != null ? this.temperature.tempFormat().format(Double.valueOf(t.getTempC())) : "-90" );
+
+		}else if (rec == TempRecName.AA) {
+
+			this.temperature.setTmpShadeUpdDt(this.temperature.sdf().format(t.getRecordedDate()));
+			this.temperature.setTempShade(t.getTempC() != null ? this.temperature.tempFormat().format(Double.valueOf(t.getTempC())) : "-90" );
+		}
 	}
 	
+	
+		
 	public void setInitTemperature() {
 		
 	}

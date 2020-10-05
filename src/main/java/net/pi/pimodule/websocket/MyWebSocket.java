@@ -6,6 +6,7 @@ import javax.websocket.OnClose;
 import javax.websocket.OnError;
 import javax.websocket.OnMessage;
 import javax.websocket.OnOpen;
+import javax.websocket.PongMessage;
 import javax.websocket.Session;
 import javax.websocket.server.ServerEndpoint;
 
@@ -39,6 +40,13 @@ public class MyWebSocket {
 		}
 	
 	}
+	
+	 @OnMessage
+     public void onPong(PongMessage pongMessage, Session session) {
+		 logger.debug("onPong:: From=" + session.getId() + " Message=" + new String(pongMessage.getApplicationData().array() ) );
+	 }
+	
+	
 
 	@OnError
 	public void onError(Throwable t) {

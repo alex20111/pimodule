@@ -75,8 +75,10 @@ public class WebSocketHandler {
 	public void processOnClose(Session session) {
 		UserSession us = userSessions.stream().filter(u-> u.getSession().getId().equals(session.getId())).findAny().orElse(null);
 
-		if (us != null) {			
-			userSessions.remove(us);
+		
+		if (us != null) {
+			logger.debug("On Close - removing user: " + us.getUserName());
+			userSessions.remove(us);			
 		}
 		logger.debug("processing on close. User pool: " + userSessions.size() );
 	}
