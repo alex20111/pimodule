@@ -22,7 +22,6 @@ public class TemperatureThread implements Runnable{
 
 	private static final Logger logger = LogManager.getLogger(TemperatureThread.class);
 
-	private TempSerialListener tempListener;
 	private boolean needToLogIn = true;
 	private String token = "";
 
@@ -32,8 +31,6 @@ public class TemperatureThread implements Runnable{
   * Clas that will push the temperature data to the server.. 
   */
 	public TemperatureThread() {
-		tempListener = new TempSerialListener();
-		tempListener.startTempLogger();
 
 		Client client = ClientBuilder.newClient();
 		webTarget = client.target("https://www.boudreault.xyz/bwservice/webapi"); 

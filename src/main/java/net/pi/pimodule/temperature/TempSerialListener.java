@@ -16,7 +16,7 @@ import org.apache.logging.log4j.Logger;
 public class TempSerialListener {
 
 	private static final Logger logger = LogManager.getLogger(TempSerialListener.class);
-	private static Serial serial;
+	private  Serial serial;
 	
 	private DataListener dl;
 

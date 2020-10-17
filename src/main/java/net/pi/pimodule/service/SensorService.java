@@ -1,5 +1,6 @@
 package net.pi.pimodule.service;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.sql.SQLException;
@@ -25,6 +26,9 @@ import home.common.data.Temperature.TempRecName;
 import home.websocket.WebSocketException;
 import net.pi.pimodule.db.TempEntity;
 import net.pi.pimodule.db.TempSql;
+import net.pi.pimodule.serial.Command;
+import net.pi.pimodule.serial.SensorGarageLed;
+import net.pi.pimodule.serial.SerialHandler;
 import net.pi.pimodule.websocket.Data;
 import net.pi.pimodule.websocket.WebSocketClient;
 
@@ -59,6 +63,14 @@ public class SensorService {
 				Data newData = gson.fromJson(data, Data.class);
 				
 				WebSocketClient.getInstance().sendMessage("{'operation': " + Data.GARAGE_FUNCTION + " , 'garageDoorStatus':"+ newData.garageDoorStatus+ " }");
+				
+				//send it to the wireless LED also.. 
+				Command led = new SensorGarageLed(newData.garageDoorStatus == 1? false: true);
+				try {
+					SerialHandler.getInstance().sendTeensyCommand(led);
+				} catch (IllegalStateException | IOException e) {
+					logger.error("error sending to Garage Led" , e);
+				}
 
 //				connectToEndpoint();
 //				clientEndPoint.sendMessage("{'operation': " + Data.GARAGE_FUNCTION + " , 'garageDoorStatus':"+ status+ " }");

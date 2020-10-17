@@ -2,3 +2,6 @@ http://host:8081/web/date/dayNightCycle/{long}/{lat}
 http://host:8081/web/temperature/currTemp   =// get current local sensor temperature
 http://host:8081/web/temperature/weather/{key}/{loadLocalSensor}     //load env can weather. Key = on-118 or qc-59 , LoadLocalSensor = Load local sensor data
 http://host:8081/web/{data}  //sensor data from the pool
+
+Logs:
+http://host:8081/web/log/debug   (Post data)

@@ -12,6 +12,8 @@ import org.apache.logging.log4j.Logger;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 
+import home.common.data.Service;
+
 
 
 // {
@@ -46,15 +48,17 @@ public class WebSocketHandler {
 
 		if (data.operation == Data.IDENTIFICATION) {
 			logger.debug("Add Identifier: " + data);
-			addUser(session, data.userName);
+			addUser(session, data);
 		}else if (data.operation == Data.GARAGE_FUNCTION){
 			logger.debug("garage info recieved: "+  data);
 			//save last garage status
 			this.lastGarageStatus = data.garageDoorStatus;
 			//get garage status and send to all websoceets registered.
 			for(UserSession u: userSessions) {
-				logger.debug("Sending to: " + u.getUserName());
-				u.SendData(  formatGarageStatus(data.garageDoorStatus));//"{ \"garageStatus\" : " +  data.garageDoorStatus + "}");
+				if(u.wantNotification(Service.GARAGE_NOTIFICATION)) {
+					logger.debug("Sending to: " + u.getUserName());
+					u.SendData(  formatGarageStatus(data.garageDoorStatus));//"{ \"garageStatus\" : " +  data.garageDoorStatus + "}");
+				}
 			}
 		}else if(data.operation == Data.TERMINATE_SESSION) {
 			logger.debug("Teminating session : " + session.getId());
@@ -84,19 +88,20 @@ public class WebSocketHandler {
 	}
 
 
-	private void addUser(Session session, String userName) throws IOException {
+	private void addUser(Session session, Data data ) throws IOException {
 
 		//check if user exist, if exist.. remove and replace session
-		UserSession us = userSessions.stream().filter(u -> u.getUserName().equals(userName)).findAny().orElse(null);
+		UserSession us = userSessions.stream().filter(u -> u.getUserName().equals(data.userName)).findAny().orElse(null);
 
 		if (us != null) {
 			us.setSession(session);
+			us.addService(data);
 			us.SendData("{\"User\": \"User exist.. Updated\"}" );
-			logger.info("User exist.. Updated: " + userName + "  UserPool: " + userSessions.size());
+			logger.info("User exist.. Updated: " + data.userName + "  UserPool: " + userSessions.size());
 		}else {			
-			UserSession u = new UserSession(session, userName);
+			UserSession u = new UserSession(session, data);
 			userSessions.add(u);
-			logger.info("Adding new user: " + userName+ "  UserPool: " + userSessions.size());
+			logger.info("Adding new user: " + data.userName+ "  UserPool: " + userSessions.size());
 		}
 		
 

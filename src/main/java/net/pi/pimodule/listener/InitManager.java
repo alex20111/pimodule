@@ -10,6 +10,7 @@ import javax.servlet.ServletContextListener;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import net.pi.pimodule.serial.SerialHandler;
 import net.pi.pimodule.thread.ThreadManager;
 
 
@@ -32,6 +33,11 @@ public class InitManager implements ServletContextListener    {
 				long sampleRate = 1000 * 60 * 5; // 5 min
 				logger.info("Starting temperature with sample rate: " + sampleRate + " in millis. In min: " + ( (sampleRate /1000) / 60) );
 				tm.startTemperature(sampleRate);
+				
+				SerialHandler sh = SerialHandler.getInstance();
+				sh.startCeiscoSerial();
+				sh.startTeensySerial();
+				
 			}else {
 				logger.info("RUNNING IN DEV MODE");
 			}

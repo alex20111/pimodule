@@ -28,7 +28,6 @@ public class WebSocketClient {
 				connectToEndpoint();
 			}
 		} catch (URISyntaxException e) {
-			// TODO Auto-generated catch block
 			logger.error("error connecting to endpoint", e);
 		}  //18 hours
 
@@ -67,8 +66,9 @@ public class WebSocketClient {
 		if (clientEndPoint == null || !clientEndPoint.isConnectionAlive()) {
 			logger.debug("Starting connection for sensorService");
 			clientEndPoint.connect();
-			//register but will never get any data.. Maybe??
-			//start thread to keep alive.. 
+
+
+			sendMessage("{ 'operation':1, 'userName':'piModuleV2'}");
 
 			if (wsAliveThread != null && wsAliveThread.isAlive()) {
 				wsAliveThread.interrupt();

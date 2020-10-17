@@ -15,6 +15,7 @@ public class Data {
     public String userName = "";
     public int garageDoorStatus = -1;
     public String sensorValue = "";  //will contain the sensor value.. can be temp. status. ect
+    public String service = ""; // a service that it want to register to. add multiple for later
     
 //    public String session;
 	@Override
