@@ -2,7 +2,9 @@ package net.pi.pimodule.service;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -22,6 +24,7 @@ import net.pi.pimodule.service.model.Message;
 import net.pi.pimodule.service.model.WeatherAlert;
 import net.pi.pimodule.service.model.WeatherInfo;
 import net.weather.action.WeatherAction;
+import net.weather.bean.City;
 import net.weather.bean.WeatherCurrentModel;
 import net.weather.bean.WeatherForecastModel;
 import net.weather.bean.WeatherGenericModel;
@@ -150,7 +153,24 @@ public class TemperatureService {
 
 		return Response.status(status).entity(msg).build();
 	}
-
-
+	@Path("envCanCities")
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getEnvCanadaCities() {
+		List<City> cities;
+		try {
+			cities = WeatherAction.loadAllEnvCanCities(false);
+			
+			List<City> sortedUsers = cities.stream()
+					  .sorted(Comparator.comparing(City::getNameEn))
+					  .collect(Collectors.toList());
+			
+			return Response.ok().entity(sortedUsers).build();
+		} catch (Exception e) {
+			logger.error("Error in geting cities", e);
+		}
+		
+		return Response.status(Status.SERVICE_UNAVAILABLE).build();
+	}
 
 }

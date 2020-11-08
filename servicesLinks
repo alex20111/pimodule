@@ -4,4 +4,5 @@ http://host:8081/web/temperature/weather/{key}/{loadLocalSensor}     //load env 
 http://host:8081/web/{data}  //sensor data from the pool
 
 Logs:
-http://host:8081/web/log/debug   (Post data)
+http://host:8081/web/logger/initAppLog/{fileName}/{option}   (get)
+http://host:8081/web/logger/log -->   (Post data)
