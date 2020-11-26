@@ -33,7 +33,7 @@ import net.pi.pimodule.websocket.Data;
 import net.pi.pimodule.websocket.WebSocketClient;
 
 /*
- * Class that handle various sensor services..
+ * Class that handle various sensor services through the wireless or ethernet. The HC-12 will be handled trough the serialHandler.
  * 
  * 
  * */

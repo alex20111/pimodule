@@ -12,8 +12,6 @@ import com.pi4j.io.serial.FlowControl;
 import com.pi4j.io.serial.Parity;
 import com.pi4j.io.serial.Serial;
 import com.pi4j.io.serial.SerialConfig;
-import com.pi4j.io.serial.SerialDataEvent;
-import com.pi4j.io.serial.SerialDataEventListener;
 import com.pi4j.io.serial.SerialFactory;
 import com.pi4j.io.serial.StopBits;
 
@@ -83,20 +81,8 @@ public class SerialHandler {
 		//open an other port 
 		teensySerial = SerialFactory.createInstance();
 
-		teensySerial.addListener(new SerialDataEventListener() {
-
-			@Override
-			public void dataReceived(SerialDataEvent event) {
-				try {
-					logger.debug( "New event !!!!!!!!!!!!!   ->  " + event.getAsciiString());
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-
-			}
-
-		});
+		teensySerial.addListener(new HandleHC12SerialData());
+		
 		// create serial config object
 		SerialConfig config = new SerialConfig();
 

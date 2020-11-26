@@ -15,10 +15,11 @@ import javax.ws.rs.core.Response;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import net.pi.pimodule.common.TemperatureHandler;
+//import net.pi.pimodule.common.TemperatureHandler;
 import net.pi.pimodule.db.TempEntity;
 import net.pi.pimodule.db.TempSql;
 
+@Deprecated
 @Path("{data}")
 public class PoolService {
 
@@ -54,7 +55,7 @@ public class PoolService {
 					te.setTempC(temp);		
 					new TempSql().saveTemperature(te);
 					
-					TemperatureHandler.getInstance().setTemperature(te);
+//					TemperatureHandler.getInstance().setTemperature(te);
 
 					
 					

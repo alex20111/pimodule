@@ -15,13 +15,14 @@ import org.apache.logging.log4j.Logger;
 
 import home.common.data.Temperature;
 import net.pi.pimodule.User;
-import net.pi.pimodule.common.TemperatureHandler;
-import net.pi.pimodule.temperature.TempSerialListener;
+//import net.pi.pimodule.common.TemperatureHandler;
+import net.pi.pimodule.db.TempSql;
 
 public class TemperatureThread implements Runnable{
 
 	private static final Logger logger = LogManager.getLogger(TemperatureThread.class);
 
+	private TempSql sql;
 	private boolean needToLogIn = true;
 	private String token = "";
 
@@ -32,6 +33,7 @@ public class TemperatureThread implements Runnable{
   */
 	public TemperatureThread() {
 
+		sql = new TempSql();
 		Client client = ClientBuilder.newClient();
 		webTarget = client.target("https://www.boudreault.xyz/bwservice/webapi"); 
 	}
@@ -40,7 +42,8 @@ public class TemperatureThread implements Runnable{
 		logger.debug("--> Temperature thread sampling at: " + new Date());
 
 		try {
-			Temperature t = TemperatureHandler.getInstance().getTemperature(); //tempListener.getTemp();
+//			Temperature t = TemperatureHandler.getInstance().getTemperature(); //tempListener.getTemp();
+			Temperature t = sql.getCurrentStoredTemperature();
 			
 			if (t != null) {
 				logger.info("--> Temperature thread  info, sending: " + t);

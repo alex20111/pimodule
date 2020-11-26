@@ -145,8 +145,14 @@ public class TempSql {
 			}
 		}	
 	}
-
-	public Temperature getCurrentStoredTemperature() throws SQLException, ClassNotFoundException {
+	/**
+	 * Get the current stored temperature.. passing a list to get the one required o
+	 * @param rec
+	 * @return
+	 * @throws SQLException
+	 * @throws ClassNotFoundException
+	 */
+	public Temperature getCurrentStoredTemperature(TempRecName... rec) throws SQLException, ClassNotFoundException {
 		DBConnection con = null;
 		Temperature temp ;
 		try {
@@ -156,15 +162,21 @@ public class TempSql {
 
 			TempEntity AA = findCurrentTemp(con, TempRecName.AA.name());
 			if (AA != null) {
-				setTempProperties(temp,AA);
+				temp.setTmpShadeUpdDt(temp.raw().format(AA.getRecordedDate()));
+				temp.setTempShade(AA.getTempC() != null ? temp.tempFormat().format(Double.valueOf(AA.getTempC())) : "-90" );
+//				setTempProperties(temp,AA);
 			}
 			TempEntity BB = findCurrentTemp(con, TempRecName.BB.name());
 			if (BB != null) {
-				setTempProperties(temp,BB);
+				temp.setTmpSunUpdDt(temp.raw().format(BB.getRecordedDate()));
+				temp.setTempSun(BB.getTempC() != null ? temp.tempFormat().format(Double.valueOf(BB.getTempC())) : "-90" );
+//				setTempProperties(temp,BB);
 			}
 			TempEntity pool = findCurrentTemp(con, TempRecName.pool.name());
 			if (pool != null) {
-				setTempProperties(temp,pool);
+				temp.setTmpPoolUpdDt(temp.raw().format(pool.getRecordedDate()));
+				temp.setTempPool( (pool.getTempC() != null ? temp.tempFormat().format(Double.valueOf(pool.getTempC())) : "-90" ) );
+//				setTempProperties(temp,pool);
 			}
 			//add new
 			for(TempRecName r : TempRecName.getNewSensors()) {
@@ -197,24 +209,24 @@ public class TempSql {
 	}
 
 	//
-	public void setTempProperties(Temperature temp, TempEntity t) {
-		TempRecName rec = TempRecName.valueOf(t.getRecorderName());
-
-		if (rec == TempRecName.pool) {
-			temp.setTmpPoolUpdDt(temp.sdf().format(t.getRecordedDate()));
-			temp.setTempPool( (t.getTempC() != null ? temp.tempFormat().format(Double.valueOf(t.getTempC())) : "-90" ) );
-
-		}else if (rec == TempRecName.BB) {
-
-			temp.setTmpSunUpdDt(temp.sdf().format(t.getRecordedDate()));
-			temp.setTempSun(t.getTempC() != null ? temp.tempFormat().format(Double.valueOf(t.getTempC())) : "-90" );
-
-		}else if (rec == TempRecName.AA) {
-
-			temp.setTmpShadeUpdDt(temp.sdf().format(t.getRecordedDate()));
-			temp.setTempShade(t.getTempC() != null ? temp.tempFormat().format(Double.valueOf(t.getTempC())) : "-90" );
-		}
-	}
+//	public void setTempProperties(Temperature temp, TempEntity t) {
+//		TempRecName rec = TempRecName.valueOf(t.getRecorderName());
+//
+//		if (rec == TempRecName.pool) {
+//			temp.setTmpPoolUpdDt(temp.sdf().format(t.getRecordedDate()));
+//			temp.setTempPool( (t.getTempC() != null ? temp.tempFormat().format(Double.valueOf(t.getTempC())) : "-90" ) );
+//
+//		}else if (rec == TempRecName.BB) {
+//
+//			temp.setTmpSunUpdDt(temp.sdf().format(t.getRecordedDate()));
+//			temp.setTempSun(t.getTempC() != null ? temp.tempFormat().format(Double.valueOf(t.getTempC())) : "-90" );
+//
+//		}else if (rec == TempRecName.AA) {
+//
+//			temp.setTmpShadeUpdDt(temp.sdf().format(t.getRecordedDate()));
+//			temp.setTempShade(t.getTempC() != null ? temp.tempFormat().format(Double.valueOf(t.getTempC())) : "-90" );
+//		}
+//	}
 	public static void main (String args[]) throws ClassNotFoundException, SQLException, IOException {
 
 		TempSql sql = new TempSql();

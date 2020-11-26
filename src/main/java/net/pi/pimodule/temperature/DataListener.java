@@ -8,7 +8,7 @@ import org.apache.logging.log4j.Logger;
 import com.pi4j.io.serial.SerialDataEvent;
 import com.pi4j.io.serial.SerialDataEventListener;
 
-import net.pi.pimodule.common.TemperatureHandler;
+//import net.pi.pimodule.common.TemperatureHandler;
 import net.pi.pimodule.db.TempEntity;
 import net.pi.pimodule.db.TempSql;
 
@@ -39,19 +39,6 @@ public class DataListener implements SerialDataEventListener
 	{
 		logger.info("Listener started");
 		sigReceivedDt = new Date();
-		
-//		try {
-//			Temperature temperature = new TempSql().getCurrentStoredTemperature();
-//			TemperatureHandler.getInstance().set
-//		} catch (SQLException | ClassNotFoundException e) {
-//			logger.error("error in getting old temperature" , e);
-//		} 
-//		
-////		if (temperature == null) {
-////			temperature = new Temperature();
-////		}
-//		
-//		logger.info("Last temperature from DB: " + temperature);
 	}
 	
 	/**
@@ -187,8 +174,8 @@ public class DataListener implements SerialDataEventListener
 //				new TempManager().addTemperature(temp);   //TODO
 				//AA = Shade, BB = SUN, Pool = POOl 
 //				temperature.setProperties(temp);
-				TemperatureHandler th = TemperatureHandler.getInstance();
-				th.setTemperature(temp);
+//				TemperatureHandler th = TemperatureHandler.getInstance();
+//				th.setTemperature(temp);
 				new TempSql().saveTemperature(temp);
 				
 			}
