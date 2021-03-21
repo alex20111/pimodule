@@ -91,7 +91,11 @@ public class TemperatureService {
 
 				WeatherCurrentModel wcm = wgm.getWeatherCurrentModel();
 
-				weather.setTemperature(String.valueOf(wcm.getCurrTemp()));
+				try {
+					weather.setTemperature(String.valueOf(wcm.getCurrTemp()));
+				}catch(NullPointerException npe) {
+					weather.setTemperature("-99.9");
+				}
 				weather.setHumidex(wcm.getFeelsLike());
 				weather.setHumidity(wcm.getHumidity());
 				weather.setWingChill(wcm.getWindChill());

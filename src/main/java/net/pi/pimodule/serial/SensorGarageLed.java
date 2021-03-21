@@ -31,7 +31,7 @@ public class SensorGarageLed implements Command{
 	}
 
 	@Override
-	public String handleDataReceived(String data) {
+	public String handleDataReceived(SensorData data) {
 		//we wont never recieve any data..
 		return null;
 	}

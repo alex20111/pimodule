@@ -103,10 +103,16 @@ public class SerialHandler {
 	 * @throws IllegalStateException
 	 * @throws IOException
 	 */
-	public void sendTeensyCommand(Command command) throws IllegalStateException, IOException {
+	public synchronized void sendTeensyCommand(Command command) throws IllegalStateException, IOException {
 		String toSend = command.sendCommand();
 		logger.debug("Sending command to teensy: " + toSend);
 		teensySerial.write(toSend);
+	}
+	
+	public synchronized void sendTeensyStringCommand(String command) throws IllegalStateException, IOException {
+	
+		logger.debug("Sending command to teensy String: " +  command);
+		teensySerial.write(command);
 	}
 	
 	public void closeTeensySerial() throws IllegalStateException, IOException {
