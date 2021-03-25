@@ -44,6 +44,9 @@ public class InitManager implements ServletContextListener    {
 			}else {
 				logger.info("RUNNING IN DEV MODE");
 			}
+			
+			
+			tm.startCleanUpThread();
 		}catch(Exception ex) {
 			ex.printStackTrace();			
 		}

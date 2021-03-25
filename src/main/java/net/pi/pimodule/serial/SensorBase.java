@@ -30,7 +30,7 @@ import net.pi.pimodule.service.model.Message;
 public abstract class SensorBase implements Command{
 
 	private static final Logger logger = LogManager.getLogger(SensorBase.class);
-	protected final BlockingQueue<Boolean> sensorReplied =  new ArrayBlockingQueue<>(1);
+	protected final static BlockingQueue<Boolean> sensorReplied =  new ArrayBlockingQueue<>(1);
 
 
 	protected void handleStartCommand(SensorData sensorData) throws ClassNotFoundException, SQLException, IllegalStateException, IOException {
@@ -44,8 +44,8 @@ public abstract class SensorBase implements Command{
 			//generate a new ID and send the information
 			StringBuilder cmd = new StringBuilder(START_MARKER);
 			
-			List<SensorEntity> list = new SensorSql().getAllSensors(); //TODO remove
-			logger.debug("All sensors: " + list);
+//			List<SensorEntity> list = new SensorSql().getAllSensors(); //TODO remove
+//			logger.debug("All sensors: " + list);
 			
 			String nextId = new SensorSql().getNextSensorId(sensorData.getSensorTypeEnum());
 			cmd.append(START_CMD + sensorData.getSensorTypeEnum().getType() + tempId + "," + nextId  );
@@ -53,7 +53,7 @@ public abstract class SensorBase implements Command{
 
 			SerialHandler.getInstance().sendTeensyStringCommand(cmd.toString());
 
-		}else if(sensorData.getData().contains("ok")) {
+		}else if(sensorData.getData().contains(OK_REPLY)) {
 			//add sensor to DB with new Sensor ID	
 			logger.debug("handleStartCommand: Contains ok ");
 			//verify if it exist before
@@ -93,7 +93,7 @@ public abstract class SensorBase implements Command{
 
 		if (sensor != null && sensor.isConfigured()) {
 			logger.debug("isConfigured, sending init data: " + sensor);
-			if(sensorData.getData().contains("OK")) {
+			if(sensorData.getData().contains(OK_REPLY)) {
 				//sensor received the configuration and replied that it was ok
 				sensor.setLastTransmit(new Date());
 				sensor.setErrorField("");
@@ -105,12 +105,13 @@ public abstract class SensorBase implements Command{
 				logger.debug("Sending string command: " + cmd);
 				SerialHandler.getInstance().sendTeensyStringCommand(cmd);
 			}
-		}else if(sensor != null && !sensor.isConfigured() && sensorData.getData().contains("OK")){ //sent when new sensor is added and then user manually configure it.
+		}else if(sensor != null && !sensor.isConfigured() && sensorData.getData().contains(OK_REPLY)){ //sent when new sensor is added and then user manually configure it.
 			logger.debug("Not configured and received confirmation, update: " + sensor);
 			//if sensor is not configured and received OK
+			Date now = new Date();
 			sensor.setConfigured(true);
-			sensor.setLastUpdated(new Date());  //here because we updated the configuration, we need to also update the lastUpdate date.
-			sensor.setLastTransmit(new Date());
+			sensor.setLastUpdated(now);  //here because we updated the configuration, we need to also update the lastUpdate date.
+			sensor.setLastTransmit(now);
 			sensor.setErrorField("");
 			sql.updateSensor(sensor);
 
@@ -121,22 +122,15 @@ public abstract class SensorBase implements Command{
 			//this can be the case if a sensor shutdown and the user turn it back on.  
 			logger.debug("Init recieved but sensor not configured: " +sensor);
 			sensor.setLastTransmit(new Date());
-			sensor.setErrorField("");
+			sensor.setErrorField("WARN: Waiting for initialization");
 			sql.updateSensor(sensor);
 			
 		}		
 		else if (sensor == null){
 			//problem, //re-ini using START_CMD //TODO
 			logger.info("Recieved an ID that does not exist on the DB, Reset sensor. ID: " + sensorId); //TODO notify sensor screen..(web)
-			@SuppressWarnings("unchecked")
-			List<Message> messages = (List<Message>)SharedData.getInstance().getSharedObject(Constants.MESSAGE_ERROR);
-			if (messages == null) {
-				messages = new ArrayList<>();
-			}
-			
 			Message msg = new Message("ERROR - Unidentified sensor", "Sensor " + sensorData.getSensorTypeEnum().getType() + sensorData.getSensorId() + " has asked to registered but do not exist on the database.");
-			messages.add(msg);
-			SharedData.getInstance().putSharedObject(Constants.MESSAGE_ERROR, messages);
+			SharedData.getInstance().addToMessage(msg);
 		}
 
 	}

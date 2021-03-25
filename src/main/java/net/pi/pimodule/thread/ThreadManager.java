@@ -2,6 +2,9 @@ package net.pi.pimodule.thread;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -15,7 +18,7 @@ import net.pi.pimodule.db.TempSql;
 public class ThreadManager {
 
 	private static final Logger logger = LogManager.getLogger(ThreadManager.class);
-	
+
 	private ScheduledExecutorService scheduler;
 
 	private static ThreadManager threadManager;
@@ -23,7 +26,7 @@ public class ThreadManager {
 	public int wthErrorCount = 0;
 
 	private ThreadManager(){		
-		scheduler = Executors.newScheduledThreadPool(3);
+		scheduler = Executors.newScheduledThreadPool(4);
 
 	}
 	public static ThreadManager getInstance(){
@@ -39,18 +42,32 @@ public class ThreadManager {
 
 
 	public void startTemperature(long sampleRateMillis) throws ClassNotFoundException, IOException, SQLException {
-		
+
 		new TempSql().createTable();
-		
+
 		TemperatureThread t = new TemperatureThread();
-		
+
 		scheduler.scheduleAtFixedRate(t, 0, sampleRateMillis, TimeUnit.MILLISECONDS);
 	}
-	
+
 	public void startWebsiteMonitoring(long sampleRateMillis) throws ClassNotFoundException, IOException, SQLException {
 		logger.info("startWebsiteMonitoring - Sampling rate: " + sampleRateMillis);
-		
+
 		scheduler.scheduleAtFixedRate(new CheckWebsite(), 0, sampleRateMillis, TimeUnit.MILLISECONDS);
 	}
-	
+
+	public void startCleanUpThread() {
+
+
+		LocalDateTime now = LocalDateTime.now();
+
+		LocalDateTime future = LocalDateTime.of(now.getYear(), now.getMonth(), now.getDayOfMonth(), 23, 59, 59);
+
+		ZonedDateTime zdtNow = ZonedDateTime.of(now, ZoneId.systemDefault());
+
+		ZonedDateTime zdtFuture = ZonedDateTime.of(future, ZoneId.systemDefault());
+		long delay = zdtFuture.toInstant().toEpochMilli() - zdtNow.toInstant().toEpochMilli();
+		scheduler.scheduleAtFixedRate(new CleanUpThread(), delay, 86400000, TimeUnit.MILLISECONDS);
+	}
+
 }

@@ -20,7 +20,8 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr *ngFor="let sensor of sensorList; index as i"  [style.background-color]="sensor.errorField.length > 0 ? '#F8D7DA': '' " 
+                    <tr *ngFor="let sensor of sensorList; index as i"  
+                        [style.background-color]="sensor.errorField.includes('ERROR') ? '#F8D7DA': sensor.errorField.includes('WARN') ? '#FFF3CD' : '' " 
                         placement="bottom" ngbPopover="{{sensor.errorField}}" triggers="mouseenter:mouseleave"                     
                         >
 

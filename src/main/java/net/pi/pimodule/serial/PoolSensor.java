@@ -3,18 +3,19 @@ package net.pi.pimodule.serial;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Date;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import net.pi.pimodule.common.Constants;
+import net.pi.pimodule.common.SharedData;
 import net.pi.pimodule.db.SensorEntity;
 import net.pi.pimodule.db.SensorSql;
 import net.pi.pimodule.db.TempEntity;
 import net.pi.pimodule.db.TempSql;
 import net.pi.pimodule.enums.SensorType;
+import net.pi.pimodule.service.model.Message;
 
 /**
  * Pool sensor.
@@ -30,8 +31,9 @@ public class PoolSensor extends SensorBase {
 
 	private static final Logger logger = LogManager.getLogger(PoolSensor.class);
 
-	private final BlockingQueue<Boolean> sensorReplied =  new ArrayBlockingQueue<>(1);
+	//	private final BlockingQueue<Boolean> sensorReplied =  new ArrayBlockingQueue<>(1);
 	private String command = "";
+	private boolean waitForReply = true;
 
 	private SensorType type;
 	private String sensorId = "";
@@ -41,29 +43,33 @@ public class PoolSensor extends SensorBase {
 		type = sensor.getSensorType();
 		sensorId = sensor.getSensorId();
 		command = formatInitString(sensor);
+		waitForReply = true;
 		return this;
 	}
 	public PoolSensor sendOk(SensorEntity sensor) {
 		type = sensor.getSensorType();
 		sensorId = sensor.getSensorId();
 		command = START_MARKER + OK_CMD + type.getType() + sensor.getSensorId() + END_MARKER;
+		waitForReply = false;
 		return this;
 	}
 
 	public boolean go() {
-		Boolean success = false;
+		Boolean success = true;
 		try {
 
 			SerialHandler.getInstance().sendTeensyStringCommand(command);
-			success = sensorReplied.poll(4000, TimeUnit.MILLISECONDS);
 
-			if (success == null) {
-				logger.debug("Timeout, null returned");
-				return false;
+			if (waitForReply) {
+				success = sensorReplied.poll(4000, TimeUnit.MILLISECONDS);
+
+				if (success == null) {
+					logger.debug("Timeout, null returned");
+					return false;
+				}
 			}
 
-
-		} catch (IllegalStateException | IOException  | InterruptedException e) {
+		} catch (IllegalStateException | IOException | InterruptedException  e) {
 			logger.error("Error in GO() ",e);
 			SensorSql sql = new SensorSql();
 			try {
@@ -120,19 +126,18 @@ public class PoolSensor extends SensorBase {
 					ent.setErrorField("");
 
 					if (!ent.isConfigured()) {
-						//send new update
-						boolean reInitSuccess = sendInitCommand(ent).go();
-						//if we have a success, the DB will already be updated..
-						if (!reInitSuccess) {
-							ent.setErrorField("ERROR: no reply when trying to re-init the sensor. Re-try");
-							sql.updateSensor(ent);
-						}
+						logger.debug("Updating sensor information" );
+						awaitSensorReply(ent, sql);
 
 					}else {
 						ent.setLastTransmit(new Date());
+						ent.setBattLvl(temp.getBatteryLevel());
 						sendOk(ent).go();
 						sql.updateSensor(ent);
 					}				
+				}else {
+					Message msg = new Message(Constants.WARNING + " - ", "Sensor " + sensorData.getSensorTypeEnum().getType() + sensorData.getSensorId() + " not registered on the DB. Reset ");
+					SharedData.getInstance().addToMessage(msg);
 				}
 			}
 		}catch(Exception ex) {
@@ -141,6 +146,30 @@ public class PoolSensor extends SensorBase {
 
 
 		return null;
+	}
+	
+	private void awaitSensorReply(SensorEntity sensor, SensorSql sql) {
+		
+		new Thread(new Runnable() {
+
+			@Override
+			public void run() {
+				//send new update
+				boolean reInitSuccess = sendInitCommand(sensor).go();
+				//if we have a success, the DB will already be updated..
+				if (!reInitSuccess) {
+					sensor.setErrorField("ERROR: no reply when trying to re-init the sensor. Re-try");
+					try {
+						sql.updateSensor(sensor);
+					} catch (ClassNotFoundException | SQLException e) {
+						Message msg = new Message("ERROR - Update", "Sensor " + sensor.getSensorType().getType() + sensor.getSensorId() + " update error: " + e.getMessage() ); 
+						SharedData.getInstance().addToMessage(msg);
+						logger.error("awaitSensorReply: " , e);
+					}
+				}				
+			}			
+		}).start();
+
 	}
 
 	private TempEntity getTemperatureData(SensorData sensorData) {
@@ -153,7 +182,24 @@ public class PoolSensor extends SensorBase {
 
 		if (dataSplit.length > 1) {
 			temp = new TempEntity();
-			temp.setBatteryLevel(dataSplit[2]);
+			
+			String battStr = dataSplit[2];
+			float fmtBatt = 0f;
+			if (battStr.length() > 0) {
+				
+				int battLen = battStr.length();
+				if (battLen == 4) {
+					fmtBatt = Float.valueOf(battStr) / 1000;
+				}else if (battLen == 3) {
+					fmtBatt = Float.valueOf(battStr) / 100;
+				}else if (battLen == 2) {
+					fmtBatt = Float.valueOf(battStr) / 10;
+				}else if (battLen == 1){
+					fmtBatt = Float.valueOf(battStr);
+				}
+			}
+			
+			temp.setBatteryLevel(String.valueOf(fmtBatt));
 			temp.setHumidity("");
 			temp.setRecordedDate(new Date());
 			temp.setRecorderName(sensorData.getSensorTypeEnum().name() + sensorData.getSensorId());

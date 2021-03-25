@@ -1,10 +1,14 @@
 package net.pi.pimodule.common;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import net.pi.pimodule.service.model.Message;
 
 public class SharedData {
 	
@@ -39,6 +43,18 @@ public class SharedData {
 	public void setRunningInProd(boolean runningInProd) {
 		this.runningInProd = runningInProd;
 	}
+	
+	public void addToMessage(Message msg) {
+		@SuppressWarnings("unchecked")
+		List<Message> messages = (List<Message>)SharedData.getInstance().getSharedObject(Constants.MESSAGE_ERROR);
+		if (messages == null) {
+			messages = new ArrayList<>();
+		}		
+		
+		messages.add(msg);
+		putSharedObject(Constants.MESSAGE_ERROR, messages);
+	}
+	
 	
 	/** returns replaced object. null if no previous value */
 	public Object putSharedObject(String key, Object value)  {

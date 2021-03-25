@@ -40,7 +40,7 @@ public class SensorConfigService {
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getSensorList() {
-		logger.debug("getSensorList ");	
+//		logger.debug("getSensorList ");	
 
 		Message msg = new Message("ERROR","getSensorList error");
 		Status status = Status.FORBIDDEN;
@@ -49,11 +49,10 @@ public class SensorConfigService {
 			sql = new SensorSql();
 		}
 
-
 		try {
 			List<SensorEntity> sensorList = sql.getAllSensors();
 
-			logger.debug("sensorList:  " + sensorList);	
+//			logger.debug("sensorList:  " + sensorList);	
 
 			return Response.ok(sensorList).build();
 

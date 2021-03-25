@@ -1,6 +1,5 @@
 package net.pi.pimodule.serial;
 
-import java.io.IOException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -35,6 +34,8 @@ public class HandleHC12SerialData implements SerialDataEventListener{
 				SensorData sensorData = new SensorData(output);
 				
 				logger.debug("HC-12 data SensorData: " + sensorData);
+
+				
 //				String sensor = String.valueOf(output.charAt(1));
 //				SensorType type = SensorType.valueOf(sensor);
 				if (sensorData.getSensorTypeEnum() == SensorType.POOL) {
