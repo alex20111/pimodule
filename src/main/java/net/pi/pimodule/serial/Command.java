@@ -8,6 +8,7 @@ public interface Command {
 	public static final String INIT_CMD = "i";
 	public static final String START_CMD = "s"; //also know as SENSOR id change
 	public static final String DATA_CMD = "d";
+	public static final String OK_CMD = "o";
 
 	public String sendCommand();
 	public String handleDataReceived(SensorData sensorData);

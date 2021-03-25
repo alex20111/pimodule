@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Constants } from '../_helper/Constants';
+import { Message } from '../_helper/Message';
 
 @Injectable({
   providedIn: 'root'
@@ -15,7 +16,26 @@ export class SensorService {
   loadAllSensors(): Observable<Sensor[]> {
     return this.http.get<Sensor[]>(`http://${Constants.HOST_ADDRESS}:8081/web/sensorsConfig/sensorList`);
   }
+  loadSensorById(id: string): Observable<Sensor | Message>{
 
+    console.log("sendingL " , id);
+
+    // console.log(typeof(id));
+
+    return this.http.post<Sensor| Message>(`http://${Constants.HOST_ADDRESS}:8081/web/sensorsConfig/fetchSensorById`, id);
+  }
+
+  updateSensor(sensor: Sensor): Observable<Message>{
+    return this.http.post<Message>(`http://${Constants.HOST_ADDRESS}:8081/web/sensorsConfig/updateSensor`, sensor  ); 
+  }
+
+  deleteSensor(sensorId: string):Observable<Message>{
+    return this.http.post<Message>(`http://${Constants.HOST_ADDRESS}:8081/web/sensorsConfig/deleteSensor`, sensorId  ); 
+  }
+
+  messages():Observable<Message[]> {
+    return this.http.get<Message[]>(`http://${Constants.HOST_ADDRESS}:8081/web/sensorsConfig/messages`);
+  }
 }
 
 export class Sensor {
@@ -33,12 +53,13 @@ export class Sensor {
   battLvl: string = "";
   configured: boolean = false;
   description: string = "";
+  errorField: string = "";
 }
 
-enum SensorType {
-  NONE,
-  POOL,
-  TEMPERATURE,
-  GARDEN,
-  LED
+export enum SensorType {
+  NONE = "NONE",
+  POOL = "POOL",
+  TEMPERATURE = "TEMPERATURE",
+  GARDEN = "GARDEN",
+  LED = "LED"
 }

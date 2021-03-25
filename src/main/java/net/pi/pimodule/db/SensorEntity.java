@@ -21,6 +21,7 @@ public class SensorEntity {
 	public static String BATT_LVL 		= "battery_level";
 	public static String CONFIGURED 	= "configured";
 	public static String DESCRIPTION 	= "description";
+	public static String ERROR_FIELD    = "error_field";
 	
 	private int     id = -1;
 	private String 	sensorId		= "";
@@ -35,6 +36,7 @@ public class SensorEntity {
 	private String  battLvl			= "";	
 	private boolean configured 		= false;
 	private String description		= "";
+	private String errorField		= "";
 	
 	public SensorEntity(){}	
 	
@@ -52,7 +54,8 @@ public class SensorEntity {
 		this.pwSaveTransFreq  	= rs.getInt(POWER_SAVE_TRANS_FREQ);
 		this.battLvl			= rs.getString(BATT_LVL);	
 		this.configured		= rs.getBoolean(CONFIGURED);
-		this.description		= rs.getString(CONFIGURED);
+		this.description		= rs.getString(DESCRIPTION);
+		this.errorField 		= rs.getString(ERROR_FIELD);
 	}
 
 	public int getId() {
@@ -159,14 +162,23 @@ public class SensorEntity {
 		this.description = description;
 	}
 
+	public String getErrorField() {
+		return errorField;
+	}
+
+	public void setErrorField(String errorField) {
+		this.errorField = errorField;
+	}
+
 	@Override
 	public String toString() {
 		return "SensorEntity [id=" + id + ", sensorId=" + sensorId + ", sensorType=" + sensorType + ", transFreq="
 				+ transFreq + ", lastTransmit=" + lastTransmit + ", lastUpdated=" + lastUpdated + ", powerSave="
 				+ powerSave + ", pwSaveStart=" + pwSaveStart + ", pwSaveEnd=" + pwSaveEnd + ", pwSaveTransFreq="
 				+ pwSaveTransFreq + ", battLvl=" + battLvl + ", configured=" + configured + ", description="
-				+ description + "]";
+				+ description + ", errorField=" + errorField + "]";
 	}
+
 
 
 	

@@ -26,22 +26,25 @@ public class HandleHC12SerialData implements SerialDataEventListener{
 		try {
 			logger.debug("HC-12 data recieved: " + event.getAsciiString());
 
-			processEvent(event.getAsciiString());
+			processEvent("<"+event.getAsciiString()+">"); //TODO remove < >
+			
+			logger.debug("HC-12 data output2: " + output);
 			
 			if (output.length() > 0) {
 				//get the sensor type:
 				SensorData sensorData = new SensorData(output);
+				
+				logger.debug("HC-12 data SensorData: " + sensorData);
 //				String sensor = String.valueOf(output.charAt(1));
 //				SensorType type = SensorType.valueOf(sensor);
-				if (sensorData.getType() == SensorType.POOL) {
+				if (sensorData.getSensorTypeEnum() == SensorType.POOL) {
 					new PoolSensor().handleDataReceived(sensorData);
 				}
 			}
 
 
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		} catch (Exception e) {
+			logger.error("Error in dataReceived" , e );
 		}
 
 	}

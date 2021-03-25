@@ -36,7 +36,7 @@ public class SensorSql {
 			while (rs.next()) {
 				exist = true;
 			}
-			
+
 			logger.debug("Creating SensorSql table. Teble exist: " + exist);
 
 
@@ -56,6 +56,7 @@ public class SensorSql {
 				columns.add(new ColumnType(SensorEntity.TRANS_FREQ).INT());
 				columns.add(new ColumnType(SensorEntity.CONFIGURED).Boolean());
 				columns.add(new ColumnType(SensorEntity.DESCRIPTION).VarChar(2000));
+				columns.add(new ColumnType(SensorEntity.ERROR_FIELD).VarChar(500));
 
 				con.createTable(SensorEntity.TBL_NAME, columns);	
 
@@ -75,7 +76,7 @@ public class SensorSql {
 			con = getConnection();
 
 			ResultSet rs = con.createSelectQuery("SELECT * FROM " + SensorEntity.TBL_NAME + " WHERE " + SensorEntity.SENSOR_TYPE + " = :sensorType AND " +SensorEntity.SENSOR_ID + " = :sensorId" )
-					.setParameter("sensorType", type.getType())
+					.setParameter("sensorType", type.name())
 					.setParameter("sensorId", sensorId)
 					.getSelectResultSet();
 
@@ -94,7 +95,7 @@ public class SensorSql {
 
 		return sensor;
 	}
-	
+
 	public List<SensorEntity> getAllSensors() throws SQLException, ClassNotFoundException {
 
 		DBConnection con = null;
@@ -103,7 +104,7 @@ public class SensorSql {
 			con = getConnection();
 
 			ResultSet rs = con.createSelectQuery("SELECT * FROM " + SensorEntity.TBL_NAME )
-						.getSelectResultSet();
+					.getSelectResultSet();
 
 
 			if (rs!=null) {
@@ -121,7 +122,36 @@ public class SensorSql {
 
 		return sensors;
 	}
-	
+
+
+	public SensorEntity findSensorById(int id) throws SQLException, ClassNotFoundException {
+
+		DBConnection con = null;
+		SensorEntity sensor = null;
+		try {
+			con = getConnection();
+
+			ResultSet rs = con.createSelectQuery("SELECT * FROM " + SensorEntity.TBL_NAME + " WHERE " + SensorEntity.ID + " = :sensorId")
+					.setParameter("sensorId", id)
+					.getSelectResultSet();
+
+
+			if (rs!=null) {
+				while(rs.next()) {
+					sensor  = new SensorEntity(rs);
+
+				}
+			}
+
+		}finally {
+			if (con != null) {
+				con.close();
+			}
+		}
+
+		return sensor;
+	}
+
 	public String getNextSensorId(SensorType t) throws SQLException, ClassNotFoundException {
 		DBConnection con = null;
 		String nextId = "000";
@@ -129,8 +159,8 @@ public class SensorSql {
 			con = getConnection();
 
 			ResultSet rs = con.createSelectQuery("SELECT * FROM " + SensorEntity.TBL_NAME + " WHERE " + SensorEntity.SENSOR_TYPE + " = :sensorType")
-					.setParameter("sensorType", SensorType.TEMPERATURE.getType())
-						.getSelectResultSet(); 
+					.setParameter("sensorType", t.name())
+					.getSelectResultSet(); 
 			TreeSet<String> sensors = new TreeSet<>();
 
 			if (rs!=null) {
@@ -139,9 +169,18 @@ public class SensorSql {
 					sensors.add(sensor.getSensorId());
 				}
 			}
-			
+
+			//			logger.debug("getNextSensorId: " + t + " sensors: " + sensors + "  get last: " + (sensors.isEmpty() ? "empty" : sensors.last()));
+
 			if (!sensors.isEmpty()) {
-				nextId  = sensors.last();
+				try {
+					int currId = Integer.parseInt(sensors.last());
+					currId ++;
+					nextId  = String.format("%03d", currId); 
+				}catch(NumberFormatException nfx) {
+					//					logger.error("Current sensor ID not numeric. " + sensors.last());
+					throw new SQLException("Current Sensor ID not numeric: " + sensors.last());
+				}
 			}else {
 				nextId = "001";
 			}
@@ -174,6 +213,7 @@ public class SensorSql {
 					.setParameter(SensorEntity.TRANS_FREQ, sensor.getTransFreq())
 					.setParameter(SensorEntity.CONFIGURED, sensor.isConfigured())
 					.setParameter(SensorEntity.DESCRIPTION, sensor.getDescription())
+					.setParameter(SensorEntity.ERROR_FIELD, sensor.getErrorField())
 					.add();
 
 		}finally {
@@ -185,26 +225,27 @@ public class SensorSql {
 		return pk;
 	}
 
-	public void updateTemp(SensorEntity sensor) throws SQLException, ClassNotFoundException {
+	public void updateSensor(SensorEntity sensor) throws SQLException, ClassNotFoundException {
 		//		logger.debug("Update temperature");
 		//		System.out.println("--upd--");
 		DBConnection con = null;
 		try {
 			con = getConnection();
 			con.buildUpdateQuery(SensorEntity.TBL_NAME)
-					.setParameter(SensorEntity.BATT_LVL, sensor.getBattLvl())
-					.setParameter(SensorEntity.LAST_TRANSMIT, sensor.getLastTransmit())
-					.setParameter(SensorEntity.LAST_UPDATED, sensor.getLastUpdated())
-					.setParameter(SensorEntity.POWER_SAVE, sensor.isPowerSave())
-					.setParameter(SensorEntity.POWER_SAVE_END, sensor.getPwSaveEnd())
-					.setParameter(SensorEntity.POWER_SAVE_ST, sensor.getPwSaveStart())
-					.setParameter(SensorEntity.POWER_SAVE_TRANS_FREQ, sensor.getPwSaveTransFreq())
-					.setParameter(SensorEntity.SENSOR_ID, sensor.getSensorId())
-					.setParameter(SensorEntity.SENSOR_TYPE, sensor.getSensorType().name())
-					.setParameter(SensorEntity.TRANS_FREQ, sensor.getTransFreq())
-					.setParameter(SensorEntity.CONFIGURED, sensor.isConfigured())
-					.setParameter(SensorEntity.DESCRIPTION, sensor.getDescription())
-					.addUpdWhereClause("Where "+SensorEntity.ID+" = :idValue", sensor.getId()).update();
+			.setParameter(SensorEntity.BATT_LVL, sensor.getBattLvl())
+			.setParameter(SensorEntity.LAST_TRANSMIT, sensor.getLastTransmit())
+			.setParameter(SensorEntity.LAST_UPDATED, sensor.getLastUpdated())
+			.setParameter(SensorEntity.POWER_SAVE, sensor.isPowerSave())
+			.setParameter(SensorEntity.POWER_SAVE_END, sensor.getPwSaveEnd())
+			.setParameter(SensorEntity.POWER_SAVE_ST, sensor.getPwSaveStart())
+			.setParameter(SensorEntity.POWER_SAVE_TRANS_FREQ, sensor.getPwSaveTransFreq())
+			.setParameter(SensorEntity.SENSOR_ID, sensor.getSensorId())
+			.setParameter(SensorEntity.SENSOR_TYPE, sensor.getSensorType().name())
+			.setParameter(SensorEntity.TRANS_FREQ, sensor.getTransFreq())
+			.setParameter(SensorEntity.CONFIGURED, sensor.isConfigured())
+			.setParameter(SensorEntity.DESCRIPTION, sensor.getDescription())
+			.setParameter(SensorEntity.ERROR_FIELD, sensor.getErrorField())
+			.addUpdWhereClause("Where "+SensorEntity.ID+" = :idValue", sensor.getId()).update();
 
 		}finally {
 			if (con != null) {
@@ -212,15 +253,18 @@ public class SensorSql {
 			}
 		}
 	}
-	
-	public void updateLastTransmit(int id, Date lastTransmit) throws SQLException, ClassNotFoundException {
-logger.debug("updateLastTransmit. id: " + id + " LastTransmit: " +  lastTransmit);
+
+	public void updateLastTransmit(int id, Date lastTransmit, boolean cleanErrorField) throws SQLException, ClassNotFoundException {
+		logger.debug("updateLastTransmit. id: " + id + " LastTransmit: " +  lastTransmit);
 		DBConnection con = null;
 		try {
 			con = getConnection();
 			con.buildUpdateQuery(SensorEntity.TBL_NAME)
-					.setParameter(SensorEntity.LAST_TRANSMIT, lastTransmit)
-					.addUpdWhereClause("Where "+SensorEntity.ID+" = :idValue", id).update();
+			.setParameter(SensorEntity.LAST_TRANSMIT, lastTransmit);
+			if (cleanErrorField) {
+				con.setParameter(SensorEntity.ERROR_FIELD, "");
+			}
+			con.addUpdWhereClause("Where "+SensorEntity.ID+" = :idValue", id).update();
 
 		}finally {
 			if (con != null) {
@@ -228,8 +272,25 @@ logger.debug("updateLastTransmit. id: " + id + " LastTransmit: " +  lastTransmit
 			}
 		}
 	}
-	
-	
+
+	public void updateLastUpdateAndTransmit(int id, Date lastUpdate) throws SQLException, ClassNotFoundException {
+		logger.debug("updateLastUpdateAndTransmit. id: " + id + " lastUpdate: " +  lastUpdate);
+		DBConnection con = null;
+		try {
+			con = getConnection();
+			con.buildUpdateQuery(SensorEntity.TBL_NAME)
+			.setParameter(SensorEntity.LAST_TRANSMIT, lastUpdate)
+			.setParameter(SensorEntity.LAST_UPDATED, lastUpdate)
+			.addUpdWhereClause("Where "+SensorEntity.ID+" = :idValue", id).update();
+
+		}finally {
+			if (con != null) {
+				con.close();
+			}
+		}
+	}
+
+
 	public void deleteSensor(int sensorId) throws ClassNotFoundException, SQLException {
 		DBConnection con = null;
 		try{

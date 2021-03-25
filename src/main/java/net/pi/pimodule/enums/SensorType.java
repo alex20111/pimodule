@@ -12,4 +12,14 @@ public enum SensorType {
 	public String getType() {
 		return this.type;
 	}
+	
+	public static SensorType genEnumType(String type) {
+		for(SensorType t: SensorType.values()) {
+			if (t.getType().equalsIgnoreCase(type)) {
+				return t;
+			}
+			
+		}
+		return NONE;
+	}
 }

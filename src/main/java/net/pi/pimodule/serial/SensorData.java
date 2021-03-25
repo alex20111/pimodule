@@ -14,24 +14,28 @@ import net.pi.pimodule.enums.SensorType;
 public class SensorData {
 	
 	private String command = "";
-	private SensorType type;
+	private SensorType sensorTypeEnum;
 	private String sensorId = "";
 	private String data = "";
 	
+	private String fullData = "";
+	
 	
 	public SensorData(String data) {
-		command = data.substring(0,1);
-		type = SensorType.valueOf(String.valueOf(data.charAt(1)));
-		sensorId = data.substring(2, 5);
-		data = data.substring(5, data.length());
+		
+		this.fullData = data;
+		this.command = data.substring(0,1);
+		this.sensorTypeEnum = SensorType.genEnumType(String.valueOf(data.charAt(1)));
+		this.sensorId = data.substring(2, 5);
+		this.data = data.substring(5, data.length());
 	}
 
 	public String getCommand() {
 		return command;
 	}
 
-	public SensorType getType() {
-		return type;
+	public SensorType getSensorTypeEnum() {
+		return sensorTypeEnum;
 	}
 	public String getSensorId() {
 		return sensorId;
@@ -40,10 +44,24 @@ public class SensorData {
 		return data;
 	}
 
+	public String getFullData() {
+		return fullData;
+	}
+
 	@Override
 	public String toString() {
-		return "SensorData [command=" + command + ", type=" + type + ", sensorId=" + sensorId + ", data=" + data + "]";
+		return "SensorData [command=" + command + ", sensorTypeEnum=" + sensorTypeEnum + ", sensorId=" + sensorId + ", data=" + data
+				+ ", fullData=" + fullData + "]";
 	}
+
+	public static void main (String arg[]) {
+		String d = "spAA0,34.9,4.76";
+		
+		SensorData s = new SensorData(d);
+		
+		System.out.println(s);
+	}
+
 
 	
 }

@@ -1,0 +1,86 @@
+
+<div *ngIf="errorMessage" class="alert alert-danger" [innerHTML]="errorMessage"></div>
+
+<div class="row">
+    <div class="col-md-5">
+        <h3>{{sensor? sensor.sensorType : "none"}} sensor id: {{sensor?.sensorId}}</h3>
+        <hr/>
+        <form *ngIf="sensorForm" [formGroup]="sensorForm" (ngSubmit)="submit()">
+            <div class="form-group">
+                <label for="transFreq"><strong>Transmit Frequency (in minutes)</strong></label>
+                <input type="text" class="form-control"  id="transFreq" required  size="20" maxlength="20"
+                formControlName="s_trans_freq"  style="max-width: 80px"
+                [ngClass]="{'is-invalid':   frm.s_trans_freq.errors && ( (frm.s_trans_freq.touched || frm.s_trans_freq.dirty) || submitted ) }"
+                >
+                <div *ngIf="frm.s_trans_freq.errors && ( (frm.s_trans_freq.touched || frm.s_trans_freq.dirty) || submitted )"  class="alert alert-danger">
+                    <div *ngIf="frm.s_trans_freq.errors?.required">Please provide a valid transmit frequency.</div>
+                    <div *ngIf="frm.s_trans_freq.errors?.pattern">Needs numeric value</div>
+                    <div *ngIf="frm.s_trans_freq.errors?.min">Needs to be greater than 0</div>
+                    <div *ngIf="frm.s_trans_freq.errors?.min">Cannot be greater than 120</div>
+                </div>
+            </div>
+            <div class="form-check mt-2">
+                <input class="form-check-input" type="checkbox" value="" id="powerS" formControlName="s_power_save" (change)="onPowerSaveCheckboxChange()">
+                <label class="form-check-label" for="powerS">
+                   <strong> Power save</strong>
+                </label>
+            </div>
+            <div class="form-group ml-3" *ngIf="sensorForm.value.s_power_save">
+                <label for="psStart"><strong>Power save start hour:</strong></label>
+                <select formControlName="s_ps_start" class="form-control" id="psStart"  style="max-width: 100px" >
+                    <option disabled>Select start hour</option>
+                    <option *ngFor="let ps of powerSaveTime" [value]="ps.hourValue">{{ps.hourDisplay}}</option> 
+                </select>
+            </div>
+            <div class="form-group ml-3" *ngIf="sensorForm.value.s_power_save" >
+                <label for="psEnd"><strong>Power save end hour:</strong></label>
+                <select formControlName="s_ps_end" class="form-control" id="psEnd"  style="max-width: 100px" >
+                    <option disabled>Select start hour</option>
+                     <option *ngFor="let ps of powerSaveTime" [value]="ps.hourValue">{{ps.hourDisplay}}</option> 
+                </select>
+            </div>
+            <div class="form-group ml-3" *ngIf="sensorForm.value.s_power_save">
+                <label for="transFreq"><strong>Power save transmit Frequency (in minutes)</strong></label>
+                <input type="text" class="form-control " id="transFreq" placeholder="" required  size="20"  style="max-width: 80px"
+                formControlName="s_ps_trans_freq" >
+                <div *ngIf="frm.s_ps_trans_freq.errors && ( (frm.s_ps_trans_freq.touched || frm.s_ps_trans_freq.dirty) || submitted )"  class="alert alert-danger">
+                    <div *ngIf="frm.s_ps_trans_freq.errors?.required">Please provide a valid transmit frequency.</div>
+                    <div *ngIf="frm.s_ps_trans_freq.errors?.pattern">Needs numeric value</div>
+                    <div *ngIf="frm.s_ps_trans_freq.errors?.min">Needs to be greater than 0</div>
+                    <div *ngIf="frm.s_ps_trans_freq.errors?.min">Cannot be greater than 120</div>
+                </div>
+            </div>
+            <div class="form-group mt-2" >
+                <label for="exampleFormControlTextarea1"><strong>Description:</strong></label>
+                <textarea class="form-control " id="exampleFormControlTextarea1" placeholder="description"   size="20"
+                formControlName="description"  rows="3"></textarea>              
+            </div>
+
+            <button class="btn btn-primary" [disabled]="loading">
+                <div *ngIf="loading" class="spinner-border spinner-border-sm"></div>
+                Submit
+            </button>
+            <button class="btn btn-default" (click)="cancelForm($event)">Cancel</button>
+        </form>
+
+
+    </div>
+</div>
+
+<!-- 
+
+
+// powerSave: boolean = false; //e
+// pwSaveStart: number = -1; //e
+// pwSaveEnd: number = -1; //e
+// pwSaveTransFreq: number = -1; //e
+// battLvl: string = ""; //ne
+// configured: boolean = false;  /ne
+// descript ion /e
+// errorField: string = ""; //ne
+   s_trans_freq: [sensorData.transFreq, [Validators.required, Validators.min(0), Validators.max(120),  Validators.pattern("^[0-9]*$"),]],
+      s_power_save: [sensorData.powerSave, [Validators.required]],
+      s_ps_start: [sensorData.pwSaveStart],
+      s_ps_end: [sensorData.pwSaveEnd],
+      s_ps_trans_freq: [sensorData.pwSaveTransFreq],
+      description: [sensorData.description] -->

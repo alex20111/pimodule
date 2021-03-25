@@ -1,6 +1,11 @@
 package net.pi.pimodule.serial;
 
+import java.io.IOException;
+import java.sql.SQLException;
 import java.util.Date;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -9,24 +14,69 @@ import net.pi.pimodule.db.SensorEntity;
 import net.pi.pimodule.db.SensorSql;
 import net.pi.pimodule.db.TempEntity;
 import net.pi.pimodule.db.TempSql;
+import net.pi.pimodule.enums.SensorType;
 
-
+/**
+ * Pool sensor.
+ * DATA expected to get from sensor
+ * "dpxxx,tmp,batt"   the 1st part (command, sensor type and sensorIf is formatted by the SensorData class).
+ * 
+ * 
+ * @author ADMIN
+ *
+ */
 
 public class PoolSensor extends SensorBase {
 
 	private static final Logger logger = LogManager.getLogger(PoolSensor.class);
 
+	private final BlockingQueue<Boolean> sensorReplied =  new ArrayBlockingQueue<>(1);
+	private String command = "";
 
-	private int status = -1;
+	private SensorType type;
+	private String sensorId = "";
 
-	public PoolSensor sensorId(int id) {
-//		this.sensorId = id;
+	public PoolSensor sendInitCommand(SensorEntity sensor) {
+		//calculate date in seconds, compensate for eastern time (-4)
+		type = sensor.getSensorType();
+		sensorId = sensor.getSensorId();
+		command = formatInitString(sensor);
 		return this;
 	}
-	public PoolSensor init(SensorEntity sensor) {
-		//calculate date in seconds, compensate for eastern time (-4)
-		formatInitString(sensor);
+	public PoolSensor sendOk(SensorEntity sensor) {
+		type = sensor.getSensorType();
+		sensorId = sensor.getSensorId();
+		command = START_MARKER + OK_CMD + type.getType() + sensor.getSensorId() + END_MARKER;
 		return this;
+	}
+
+	public boolean go() {
+		Boolean success = false;
+		try {
+
+			SerialHandler.getInstance().sendTeensyStringCommand(command);
+			success = sensorReplied.poll(4000, TimeUnit.MILLISECONDS);
+
+			if (success == null) {
+				logger.debug("Timeout, null returned");
+				return false;
+			}
+
+
+		} catch (IllegalStateException | IOException  | InterruptedException e) {
+			logger.error("Error in GO() ",e);
+			SensorSql sql = new SensorSql();
+			try {
+				SensorEntity sensorEntity = sql.findSensor(type, sensorId);
+				sensorEntity.setErrorField("ERROR: Error while tring to talk to the sensor, Logs. Error: " + e.getMessage());
+				sql.updateSensor(sensorEntity);
+			} catch (ClassNotFoundException | SQLException e1) {
+				logger.error("Error updating entity ",e);
+			}
+
+			success = false;
+		}
+		return success;
 	}
 
 	/**
@@ -34,12 +84,9 @@ public class PoolSensor extends SensorBase {
 	 */
 	@Override
 	public String sendCommand() {
-		StringBuilder sb = new StringBuilder(START_MARKER);
-		//		sb.append(sensor.getIdentifier());
-		sb.append(status);
-		sb.append(END_MARKER);
 
-		return sb.toString();
+
+		return "";
 	}
 
 	@Override
@@ -54,20 +101,39 @@ public class PoolSensor extends SensorBase {
 				//send init data to sensor
 				super.handleInitCommand(sensorData);
 			}else if(sensorData.getCommand().startsWith(DATA_CMD)) {
+				logger.debug("Data recieved from sensor: " + sensorData);
 				//save data to database.. also save last transmit time.. last update time is when you update it manually. 
 				SensorSql sql = new SensorSql();
-				SensorEntity ent = sql.findSensor(sensorData.getType(), sensorData.getSensorId());
-				
+				SensorEntity ent = sql.findSensor(sensorData.getSensorTypeEnum(), sensorData.getSensorId());
+
 				if (ent != null) {
-					//update
-					sql.updateLastTransmit(ent.getId(), new Date());
+
 					//update temp
 					TempSql tempSql= new TempSql();				
-					
-					tempSql.addTemp(getTemperatureData(sensorData.getData()));					
+
+					TempEntity temp = getTemperatureData(sensorData);
+					if (temp != null) {
+						logger.debug("formatting and adding pool temperature data: " + temp);
+						tempSql.addTemp(temp);	
+					}
+
+					ent.setErrorField("");
+
+					if (!ent.isConfigured()) {
+						//send new update
+						boolean reInitSuccess = sendInitCommand(ent).go();
+						//if we have a success, the DB will already be updated..
+						if (!reInitSuccess) {
+							ent.setErrorField("ERROR: no reply when trying to re-init the sensor. Re-try");
+							sql.updateSensor(ent);
+						}
+
+					}else {
+						ent.setLastTransmit(new Date());
+						sendOk(ent).go();
+						sql.updateSensor(ent);
+					}				
 				}
-				
-				
 			}
 		}catch(Exception ex) {
 			logger.error("Error in handleDataReceived" , ex);
@@ -77,23 +143,25 @@ public class PoolSensor extends SensorBase {
 		return null;
 	}
 
-	private TempEntity getTemperatureData(String data) {
-		return null;
-	}
-	
-	public static void main(String args[]) {
-		System.out.println("Started");
-		PoolSensor s  = new PoolSensor();
-		
-		String data = "spAA3";
-		
-//		s.handleDataReceived(data);
-//		
-//		data = "sp001ok";
-//		s.handleDataReceived(data);
-		
-	}
+	private TempEntity getTemperatureData(SensorData sensorData) {
 
+
+		TempEntity temp = null;
+
+		//split info
+		String dataSplit[] = sensorData.getData().split(DELIMITER);
+
+		if (dataSplit.length > 1) {
+			temp = new TempEntity();
+			temp.setBatteryLevel(dataSplit[2]);
+			temp.setHumidity("");
+			temp.setRecordedDate(new Date());
+			temp.setRecorderName(sensorData.getSensorTypeEnum().name() + sensorData.getSensorId());
+			temp.setTempC(dataSplit[1]);
+		}
+
+		return temp;
+	}
 
 
 	//  <dp091232-3.43> =  1 = cmd, 2= sensor type, 3-6 = id, 7 to end = data

@@ -1,6 +1,7 @@
-import { Sensor, SensorService } from './../services/sensor.service';
+import { Sensor, SensorService, SensorType } from './../services/sensor.service';
 import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
-import { faBars, faChevronCircleRight, faChevronCircleLeft } from '@fortawesome/free-solid-svg-icons';
+import { faBars, faBan, faSwimmingPool, IconDefinition, faThermometerThreeQuarters, faTrashAlt, faPlusCircle, faEdit } from '@fortawesome/free-solid-svg-icons';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-main-page',
@@ -9,48 +10,100 @@ import { faBars, faChevronCircleRight, faChevronCircleLeft } from '@fortawesome/
 })
 export class MainPageComponent implements OnInit, OnDestroy {
 
+  resultMessage: string = "";
+  resultError: string = "";
+
   sensorList: Sensor[] = [];
+  // menuCollapse: boolean = false;
 
-
-  dropDownCollapsed: boolean = true;
-  navMenuBarCollapsed: boolean = true;
-  menuCollapse: boolean = false;
+  type = SensorType;
+  intervalId;
 
   //icons
   faBars = faBars;
-  faChevronCircleRight = faChevronCircleRight;
-  faChevronCircleLeft = faChevronCircleLeft;
+  faBan = faBan;
+  faSwimmingPool = faSwimmingPool;
+  faThermometerThreeQuarters = faThermometerThreeQuarters;
+  faTrashAlt = faTrashAlt;
+  faPlusCircle = faPlusCircle;
+  faEdit = faEdit;
 
-  constructor(private sensorService: SensorService) { }
+  constructor(private sensorService: SensorService, private router: Router) { 
+    const navigation = this.router.getCurrentNavigation();
+    const state = navigation.extras.state as {saveResult: string};
+    if (state){
+     this.resultMessage = state.saveResult;
+    }
+  }
 
-  ngOnInit(): void {
-    
+  ngOnInit(): void {    
+
+    this.loadAllSensors();
+
+    this.intervalId = setInterval(() => {
+      this.loadAllSensors(); 
+    }, 3000);
+  
+  }
+
+  loadAllSensors(){
     this.sensorService.loadAllSensors().subscribe(result => {
-      console.log("Sersor service result: " , result);
+      console.log("Sersor service result: ", result);
       this.sensorList = result;
     },
-    err =>{
-      console.error("error in loadAllSensors", err);
-    });
-
-
-    // intervalId = setInterval(this.opensnack(text), 10000);
-
+      err => {
+        console.error("error in loadAllSensors", err);
+      });
 
   }
- 
-  @HostListener('window:resize', ['$event'])
-  onResize(event) {
-    
-    if(event.target.innerWidth < 988){ //px
-      // console.log(event);
-      this.menuCollapse = true;
+
+  sensorTypeIcon(sensorType: SensorType): IconDefinition {
+    // console.log(sensorType, SensorType.POOL.toFixed, SensorType.POOL);
+    let icon = this.faBan;
+    if (sensorType === SensorType.POOL) {
+      icon = this.faSwimmingPool;
+    } else if (sensorType === SensorType.TEMPERATURE) {
+      icon = this.faThermometerThreeQuarters;
+
     }
-    
+    return icon;
+
+  }
+  formatDate(dateStr: string): Date {
+    let date = null;
+    if (dateStr && dateStr.includes("[UTC]")) {
+      dateStr = dateStr.substring(0, dateStr.indexOf("["));
+    }
+
+    // console.log("Date Str: ", dateStr);
+    date = new Date(dateStr);
+    return date;
+  }
+
+  deleteSensor(sensorId: string){
+    console.log(typeof(sensorId));
+
+    let yes = confirm("Are you sure?");
+
+    if (yes){
+      let id = sensorId.toString();
+      console.log("delete: " , id, typeof(id));
+      this.sensorService.deleteSensor(id).subscribe(result => {
+        if (result.message === "SUCCESS"){
+          this.resultMessage = result.description;
+          this.loadAllSensors();
+        }else{
+          this.resultError = result.message;
+        }
+      },
+      err => {
+        this.resultError = err.error.description + '<br/>' + err.message;
+      })
+    }
   }
 
   ngOnDestroy() {
-    // clearInterval(this.intervalId);
+     clearInterval(this.intervalId);
   }
 
 }

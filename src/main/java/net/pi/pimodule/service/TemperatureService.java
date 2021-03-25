@@ -91,38 +91,40 @@ public class TemperatureService {
 
 				WeatherCurrentModel wcm = wgm.getWeatherCurrentModel();
 
-				try {
-					weather.setTemperature(String.valueOf(wcm.getCurrTemp()));
-				}catch(NullPointerException npe) {
-					weather.setTemperature("-99.9");
-				}
-				weather.setHumidex(wcm.getFeelsLike());
-				weather.setHumidity(wcm.getHumidity());
-				weather.setWingChill(wcm.getWindChill());
-				weather.setWind(wcm.getWindDirectionText());
-				weather.setObservationTime(wcm.getObservationTime());
-				weather.setWeather(wcm.getSummary());
+				if (wcm != null) {
+					try {
+						weather.setTemperature(String.valueOf(wcm.getCurrTemp()));
+					}catch(NullPointerException npe) {
+						weather.setTemperature("-99.9");
+					}
+					weather.setHumidex(wcm.getFeelsLike() != null ? wcm.getFeelsLike() : "" );
+					weather.setHumidity(wcm.getHumidity() != null ? wcm.getHumidity() : "");
+					weather.setWingChill(wcm.getWindChill() != null ? wcm.getWindChill() : "");
+					weather.setWind(wcm.getWindDirectionText() != null ? wcm.getWindDirectionText() : "" );
+					weather.setObservationTime(wcm.getObservationTime() != null ? wcm.getObservationTime() : "" );
+					weather.setWeather(wcm.getSummary() != null ? wcm.getSummary() : "");
 
-				List<Forecast> forecasts = new ArrayList<Forecast>();
+					List<Forecast> forecasts = new ArrayList<Forecast>();
 
-				wgm.getWForecastModel().stream().forEach(f -> {
-					Forecast forecast = new Forecast(); 
-					forecast.setForecast(f.getForecast());
-					forecast.setDayOfWeek(f.getDayOfWeek());
-					forecast.setUvIndex(f.getUvIndex());
-					forecast.setWeather(f.getWeatherOutlook().trim());
-					forecasts.add(forecast);
-				});
+					wgm.getWForecastModel().stream().forEach(f -> {
+						Forecast forecast = new Forecast(); 
+						forecast.setForecast(f.getForecast() != null ? f.getForecast() : "");
+						forecast.setDayOfWeek(f.getDayOfWeek() != null ? f.getDayOfWeek() : "" );
+						forecast.setUvIndex(f.getUvIndex() != null ? f.getUvIndex() : "");
+						forecast.setWeather(f.getWeatherOutlook() != null ? f.getWeatherOutlook().trim(): "");
+						forecasts.add(forecast);
+					});
 
-				weather.setForecast(forecasts);
+					weather.setForecast(forecasts);
 
-				if (wgm.getWeatherAlert() != null) {
-					weather.setAlert(new WeatherAlert(wgm.getWeatherAlert().getDescription(), wgm.getWeatherAlert().getMessage(), wgm.getWeatherAlert().getLevel()));
-				}
+					if (wgm.getWeatherAlert() != null) {
+						weather.setAlert(new WeatherAlert(wgm.getWeatherAlert().getDescription(), wgm.getWeatherAlert().getMessage(), wgm.getWeatherAlert().getLevel()));
+					}
 
-				//set UV index
-				if (wgm.getWForecastModel().size() > 0) {
-					weather.setUV(wgm.getWForecastModel().get(0).getUvIndex());
+					//set UV index
+					if (wgm.getWForecastModel().size() > 0) {
+						weather.setUV(wgm.getWForecastModel().get(0).getUvIndex());
+					}
 				}
 
 			}

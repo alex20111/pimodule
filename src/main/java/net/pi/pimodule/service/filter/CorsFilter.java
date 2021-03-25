@@ -20,8 +20,7 @@ public class CorsFilter implements ContainerResponseFilter {
     @Override
     public void filter(ContainerRequestContext requestContext, 
       ContainerResponseContext responseContext) throws IOException {
-//    
-    	logger.debug("CORS FILTER");
+
     	
           responseContext.getHeaders().add(
             "Access-Control-Allow-Origin", "*");

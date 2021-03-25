@@ -10,6 +10,9 @@ public class GetTimeSeconds {
 		
 		System.out.println(( new Date().getTime() - (hour) ) / 1000 +  "  h: " + hour);
 
+
+		 System.out.println(String.format("%03d", 22)); 
+
 	}
 
 }
