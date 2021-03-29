@@ -48,25 +48,28 @@ public class GetTimeSeconds {
 		}
 		
 		System.out.println(fmtBatt);
-		
-		int start = 15;
-		int end = 4;
-		
-//		LocalDateTime now2 = LocalDateTime.now();
-		LocalDateTime now2 = LocalDateTime.of(now.getYear(), now.getMonth(), now.getDayOfMonth(), 12, 0, 0);
-//		LocalDateTime future2 = LocalDateTime.of(now.getYear(), now.getMonth(), now.getDayOfMonth(), end, 0, 0);
-		
 	
-		if (now2.getHour() > start && now2.getHour() < end) {
-			System.out.println("Bingo1");
-		}else if(now2.getHour() > start) {
-			System.out.println("Bingo2");
+		int s = 15;
+		int e = 4;
+		
+		int t[] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,0};
+		
+		for(int i = 0 ; i < t.length; i++) {
+			System.out.println( t[i]+ " in between " + s + " and " + e + " ? " + powerSave(t[i], s, e));
+		}
+		
+
+	}
+	
+	private static boolean powerSave(int t, int s, int e) {
+		if ( ( s < e && t >= s && t < e)  || 
+			 (s > e && ( t >= s || t < e ) ) ) {	
+				return true;
+		
 		}
 		
 		
-		
-		
-
+		return false;
 	}
 
 }

@@ -4,11 +4,6 @@ import java.io.IOException;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
-import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -55,7 +50,7 @@ public class TempSql {
 				columns.add(new ColumnType(TempEntity.BATT_LVL, false).VarChar(10));
 				columns.add(new ColumnType(TempEntity.HUMIDITY, false).VarChar(10));
 				columns.add(new ColumnType(TempEntity.REC_DATE, false).TimeStamp());
-				columns.add(new ColumnType(TempEntity.REC_NAME, false).VarChar(10));
+				columns.add(new ColumnType(TempEntity.REC_NAME, false).VarChar(30));
 				columns.add(new ColumnType(TempEntity.TEMP, false).VarChar(10));
 
 				con.createTable(TempEntity.TBL_NAME, columns);	

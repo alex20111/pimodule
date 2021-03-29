@@ -22,6 +22,7 @@ import net.pi.pimodule.db.SensorEntity;
 import net.pi.pimodule.db.SensorSql;
 import net.pi.pimodule.enums.SensorType;
 import net.pi.pimodule.serial.PoolSensor;
+import net.pi.pimodule.serial.TemperatureSensor;
 import net.pi.pimodule.service.model.Message;
 
 
@@ -129,19 +130,25 @@ public class SensorConfigService {
 				//we need to send the initial commit to the waiting sensor.
 				//after that the sensor will update itself when it send the data.			
 
+				boolean success = false;
 				if (type == SensorType.POOL) {		
 
-					boolean success = new PoolSensor().sendInitCommand(sensor).go();
+					 success = new PoolSensor().sendInitCommand(sensor).go();
+				
+				}else if (type == SensorType.TEMPERATURE) {		
 
-					if (!success ) {   
-						//save on DB
-						msg = new Message("ERROR", "Data Saved but no OK replies when trying to initialize the sensor, try again");
-						status = Status.SERVICE_UNAVAILABLE;
-						return Response.status(status).entity(msg).build();
-					}else {
-						msg = new Message("SUCCESS", "Success");					
-						return Response.ok().entity(msg).build();
-					}
+					success = new TemperatureSensor().sendInitCommand(sensor).go();			
+					
+				}
+				
+				if (!success ) {   
+					//save on DB
+					msg = new Message("ERROR", "Data Saved but no OK replies when trying to initialize the sensor, try again");
+					status = Status.SERVICE_UNAVAILABLE;
+					return Response.status(status).entity(msg).build();
+				}else {
+					msg = new Message("SUCCESS", "Success");					
+					return Response.ok().entity(msg).build();
 				}
 			}else {
 				//not a new sensor..DB has already been updated , just return success.
@@ -201,6 +208,7 @@ public class SensorConfigService {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getMessages() {
 		
+		@SuppressWarnings("unchecked")
 		List<Message> messages = (List<Message>)SharedData.getInstance().getSharedObject(Constants.MESSAGE_ERROR);
 		
 		if (messages == null) {
