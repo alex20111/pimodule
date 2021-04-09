@@ -10,6 +10,8 @@ import { HttpClientModule } from '@angular/common/http';
 import { ManageSensorComponent } from './manage-sensor/manage-sensor.component';
 import { SideMenuComponent } from './side-menu/side-menu.component';
 import { TopMenuComponent } from './top-menu/top-menu.component';
+import { LocationComponent } from './location/location.component';
+import { ManageLocationComponent } from './location/manage-location/manage-location.component';
 
 @NgModule({
   declarations: [
@@ -17,7 +19,9 @@ import { TopMenuComponent } from './top-menu/top-menu.component';
     MainPageComponent,
     ManageSensorComponent,
     SideMenuComponent,
-    TopMenuComponent
+    TopMenuComponent,
+    LocationComponent,
+    ManageLocationComponent
   ],
   imports: [
     BrowserModule,

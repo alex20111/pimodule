@@ -1,3 +1,4 @@
+import java.text.DecimalFormat;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -57,6 +58,29 @@ public class GetTimeSeconds {
 		for(int i = 0 ; i < t.length; i++) {
 			System.out.println( t[i]+ " in between " + s + " and " + e + " ? " + powerSave(t[i], s, e));
 		}
+		
+		
+String nbr = "2434";
+		
+
+	if (nbr.lastIndexOf(".") != -1 ) {
+
+		try{
+
+			 Float.parseFloat(nbr);
+		}catch(NumberFormatException e2){
+			System.out.println(0.0f);
+		}
+	}else {
+		try{
+
+			float newNbr =  Float.parseFloat(nbr);
+			
+			System.out.println(newNbr / 100);
+		}catch(NumberFormatException e3){
+			System.out.println(0.0f);
+		}
+	}
 		
 
 	}

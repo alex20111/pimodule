@@ -1,0 +1,46 @@
+
+
+<div *ngIf="errorMessage" class="alert alert-danger" [innerHTML]="errorMessage"></div>
+
+<div class="row">
+    <div class="col-md-5">
+        <!-- <h3>{{sensor? sensor.sensorType : "none"}} sensor id: {{sensor?.sensorId}}</h3> -->
+        <h3>{{action === 'add' ? 'Add location': 'Edit Location ' +  location.sensorLocation }}</h3>
+        <hr/>
+        <form *ngIf="sensorLocForm" [formGroup]="sensorLocForm" (ngSubmit)="submit()">
+            <div class="form-group">
+                <label for="location"><strong>Location name</strong></label>
+                <input type="text" class="form-control"  id="location" required  size="20" maxlength="20"
+                formControlName="s_location"  
+                [ngClass]="{'is-invalid':   frm.s_location.errors && ( (frm.s_location.touched || frm.s_location.dirty) || submitted ) }"
+                >
+                <div *ngIf="frm.s_location.errors && ( (frm.s_location.touched || frm.s_location.dirty) || submitted )"  class="alert alert-danger">
+                    <div *ngIf="frm.s_location.errors?.required">Please provide a valid location name</div>
+                    <div *ngIf="frm.s_location.errors?.maxLength">Cannot exceed 20 characters</div>
+                </div>
+            </div>  
+      
+            <div class="form-group " >
+                <label for="sensorIdFkey"><strong>Associated sensor:</strong></label>
+                <select formControlName="s_sensor_fk" class="form-control" id="sensorIdFkey"  style="max-width: 100px" >
+                    <option disabled>Sensor</option>
+                     <!-- <option *ngFor="let ps of powerSaveTime" [value]="ps.hourValue">{{ps.hourDisplay}}</option>  -->
+                </select>
+            </div>
+           
+            <div class="form-group mt-2" >
+                <label for="descTextArea"><strong>Description:</strong></label>
+                <textarea class="form-control " id="descTextArea" placeholder="description"   size="20"
+                formControlName="s_description"  rows="3"></textarea>              
+            </div>
+
+            <button class="btn btn-primary" [disabled]="loading">
+                <div *ngIf="loading" class="spinner-border spinner-border-sm"></div>
+                Submit
+            </button>
+            <button class="btn btn-default" (click)="cancelForm($event)">Cancel</button>
+        </form>
+
+
+    </div>
+</div>

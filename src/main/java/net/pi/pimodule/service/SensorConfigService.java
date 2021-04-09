@@ -19,6 +19,8 @@ import org.apache.logging.log4j.Logger;
 import net.pi.pimodule.common.Constants;
 import net.pi.pimodule.common.SharedData;
 import net.pi.pimodule.db.SensorEntity;
+import net.pi.pimodule.db.SensorLocSql;
+import net.pi.pimodule.db.SensorLocation;
 import net.pi.pimodule.db.SensorSql;
 import net.pi.pimodule.enums.SensorType;
 import net.pi.pimodule.serial.PoolSensor;
@@ -32,6 +34,7 @@ public class SensorConfigService {
 	private static final Logger logger = LogManager.getLogger(SensorConfigService.class);
 
 	private SensorSql sql;
+	private SensorLocSql sqlLoc;
 
 	//	private SensorConfigService() {
 	//		sql = new SensorSql();
@@ -217,5 +220,34 @@ public class SensorConfigService {
 		
 		return Response.ok(messages).build();
 	}
+
+	
+	@Path("locations")
+	@GET
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getSensorLocationList() {
+		
+		Message msg = new Message("ERROR","getSensorLocationList error");
+		Status status = Status.FORBIDDEN;
+
+		if (sqlLoc == null) {
+			sqlLoc = new SensorLocSql();
+		}
+
+		try {
+			
+			List<SensorLocation> locList = sqlLoc.getAllSensorLocation(true);
+
+
+			return Response.ok(locList).build();
+
+		} catch (ClassNotFoundException | SQLException e) {
+			logger.error("Error in getSensorLocationList. " , e);
+			status = Status.BAD_REQUEST;
+		}		
+
+		return Response.status(status).entity(msg).build();
+	}
+	
 
 }

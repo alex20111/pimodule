@@ -198,6 +198,35 @@ public class TempSql {
 
 		return temp;
 	}
+	
+	/**
+	 * Clean up the temperature db.. 
+	 * 
+	 * @param cleanUpFrom
+	 * 			- Give a date to clean up to. So if we want to clean up the last month, the cleanUpFrom woulb be Current date - 1 month = cleanUpFrom. 
+	 * @throws SQLException 
+	 * @throws ClassNotFoundException 
+	 */
+	public void cleanUp(Date cleanUpFrom) throws ClassNotFoundException, SQLException {
+		DBConnection con = null;
+
+		try {
+			con = getConnection();
+			String query = "DELETE FROM " + TempEntity.TBL_NAME + " where " + TempEntity.REC_DATE + " <= :date";
+
+			con.createSelectQuery(query)
+			.setParameter("date", cleanUpFrom)
+			.delete();
+			
+		}finally {
+			if (con != null) {
+				con.close();
+			}
+		
+		}
+		
+		
+	}
 	private int addTemp(DBConnection con, TempEntity temp) throws SQLException {
 		//		logger.debug("add temperature");
 
@@ -215,66 +244,7 @@ public class TempSql {
 
 		Database db = new Database("jdbc:h2:" +Constants.DB_URL,Constants.DB_USER, Constants.DB_PASS.toCharArray(), DbClass.H2);
 		return new DBConnection(db);
-		//		Database db = new Database(Constants.DB_MYSQL,Constants.DB_USER, Constants.DB_PASS.toCharArray(), DbClass.Mysql);
-		//				return  new DBConnection(Constants.DB_MYSQL, Constants.DB_USER, Constants.DB_PASS, DbClass.Mysql );
-		//		return new DBConnec.tion(db);
 	}
 
-	//
-	//	public void setTempProperties(Temperature temp, TempEntity t) {
-	//		TempRecName rec = TempRecName.valueOf(t.getRecorderName());
-	//
-	//		if (rec == TempRecName.pool) {
-	//			temp.setTmpPoolUpdDt(temp.sdf().format(t.getRecordedDate()));
-	//			temp.setTempPool( (t.getTempC() != null ? temp.tempFormat().format(Double.valueOf(t.getTempC())) : "-90" ) );
-	//
-	//		}else if (rec == TempRecName.BB) {
-	//
-	//			temp.setTmpSunUpdDt(temp.sdf().format(t.getRecordedDate()));
-	//			temp.setTempSun(t.getTempC() != null ? temp.tempFormat().format(Double.valueOf(t.getTempC())) : "-90" );
-	//
-	//		}else if (rec == TempRecName.AA) {
-	//
-	//			temp.setTmpShadeUpdDt(temp.sdf().format(t.getRecordedDate()));
-	//			temp.setTempShade(t.getTempC() != null ? temp.tempFormat().format(Double.valueOf(t.getTempC())) : "-90" );
-	//		}
-	//	}
-	public static void main (String args[]) throws ClassNotFoundException, SQLException, IOException {
-
-		TempSql sql = new TempSql();
-		sql.createTable();
-
-		System.out.println("Get current stored temp");
-		Temperature t1 = sql.getCurrentStoredTemperature();
-		System.out.println("Stored temp: " + t1);
-		System.out.println("BB record");
-		TempEntity ent1 = new TempEntity();
-		ent1.setRecordedDate(new Date());
-		ent1.setRecorderName(TempRecName.BB.name());
-		ent1.setTempC("33.5");
-
-		sql.saveTemperature(ent1);
-		t1 = sql.getCurrentStoredTemperature();
-		System.out.println("Stored temp 2 : " + t1);
-
-		System.out.println("BB record");
-		ent1 = new TempEntity();
-		ent1.setRecordedDate(new Date());
-		ent1.setRecorderName(TempRecName.BB.name());
-		ent1.setTempC("45");
-		sql.saveTemperature(ent1);
-		t1 = sql.getCurrentStoredTemperature();
-		System.out.println("Stored temp 3 : " + t1);
-
-
-		System.out.println("AA record");
-		ent1 = new TempEntity();
-		ent1.setRecordedDate(new Date());
-		ent1.setRecorderName(TempRecName.AA.name());
-		ent1.setTempC("45");
-		sql.saveTemperature(ent1);
-		t1 = sql.getCurrentStoredTemperature();
-		System.out.println("Stored temp 4 : " + t1);
-
-	}
+	
 }

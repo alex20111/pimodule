@@ -7,6 +7,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -15,6 +16,7 @@ import net.pi.pimodule.common.Constants;
 import net.pi.pimodule.common.SharedData;
 import net.pi.pimodule.db.SensorEntity;
 import net.pi.pimodule.db.SensorSql;
+import net.pi.pimodule.enums.SensorType;
 import net.pi.pimodule.service.model.Message;
 
 //Sensor with ID example:
@@ -31,6 +33,12 @@ public abstract class SensorBase implements Command{
 
 	private static final Logger logger = LogManager.getLogger(SensorBase.class);
 	protected final static BlockingQueue<Boolean> sensorReplied =  new ArrayBlockingQueue<>(1);
+	
+	private String command = "";
+	private boolean waitForReply = true;
+
+	private SensorType type;
+	private String sensorId = "";
 
 
 	protected void handleStartCommand(SensorData sensorData) throws ClassNotFoundException, SQLException, IllegalStateException, IOException {
@@ -44,16 +52,14 @@ public abstract class SensorBase implements Command{
 			//generate a new ID and send the information
 			StringBuilder cmd = new StringBuilder(START_MARKER);
 			
-//			List<SensorEntity> list = new SensorSql().getAllSensors(); //TODO remove
-//			logger.debug("All sensors: " + list);
-			
 			String nextId = new SensorSql().getNextSensorId(sensorData.getSensorTypeEnum());
 			cmd.append(START_CMD + sensorData.getSensorTypeEnum().getType() + tempId + "," + nextId  );
 			cmd.append(END_MARKER);						
 
 			SerialHandler.getInstance().sendTeensyStringCommand(cmd.toString());
 
-		}else if(sensorData.getData().contains(OK_REPLY)) {
+		}
+		else if(sensorData.getData().contains(OK_REPLY)) {
 			//add sensor to DB with new Sensor ID	
 			logger.debug("handleStartCommand: Contains ok ");
 			//verify if it exist before
@@ -97,7 +103,6 @@ public abstract class SensorBase implements Command{
 				//sensor received the configuration and replied that it was ok
 				sensor.setLastTransmit(new Date());
 				sensor.setErrorField("");
-//				sensor.setLastUpdated(new Date());
 				sql.updateSensor(sensor);
 			}else {
 				//sensor sending init Id and waiting for the master to send the configuration
@@ -163,5 +168,78 @@ public abstract class SensorBase implements Command{
 
 		return sb.toString();
 	}
+	
+	protected void awaitSensorReply(SensorEntity sensor, SensorSql sql) {
+		
+		new Thread(new Runnable() {
+
+			@Override
+			public void run() {
+				//send new update
+				boolean reInitSuccess = sendInitCommand(sensor).go();
+				//if we have a success, the DB will already be updated..
+				if (!reInitSuccess) {
+					sensor.setErrorField("ERROR: no reply when trying to re-init the sensor. Re-try");
+					try {
+						sql.updateSensor(sensor);
+					} catch (ClassNotFoundException | SQLException e) {
+						Message msg = new Message("ERROR - Update", "Sensor " + sensor.getSensorType().getType() + sensor.getSensorId() + " update error: " + e.getMessage() ); 
+						SharedData.getInstance().addToMessage(msg);
+						logger.error("awaitSensorReply: " , e);
+					}
+				}				
+			}			
+		}).start();
+
+	}
+	
+	public SensorBase sendInitCommand(SensorEntity sensor) {
+		//calculate date in seconds, compensate for eastern time (-4)
+		type = sensor.getSensorType(); // used in command GO
+		sensorId = sensor.getSensorId();
+		command = formatInitString(sensor);
+		waitForReply = true;
+		return this;
+	}
+	
+	public SensorBase sendOk(SensorEntity sensor) {
+		type = sensor.getSensorType();
+		sensorId = sensor.getSensorId();
+		command = START_MARKER + OK_CMD + type.getType() + sensor.getSensorId() + END_MARKER;
+		waitForReply = false;
+		return this;
+	}
+	
+	public boolean go() {
+		Boolean success = true;
+		try {
+
+			SerialHandler.getInstance().sendTeensyStringCommand(command);
+
+			if (waitForReply) {
+				success = sensorReplied.poll(4000, TimeUnit.MILLISECONDS);
+
+				if (success == null) {
+					logger.debug("Timeout, null returned");
+					return false;
+				}
+			}
+
+		} catch (IllegalStateException | IOException | InterruptedException  e) {
+			logger.error("Error in GO() ",e);
+			SensorSql sql = new SensorSql();
+			try {
+				SensorEntity sensorEntity = sql.findSensor(type, sensorId);
+				sensorEntity.setErrorField("ERROR: Error while tring to talk to the sensor, Logs. Error: " + e.getMessage());
+				sql.updateSensor(sensorEntity);
+			} catch (ClassNotFoundException | SQLException e1) {
+				logger.error("Error updating entity ",e);
+			}
+
+			success = false;
+		}
+		return success;
+	}
+
 
 }

@@ -10,6 +10,7 @@ import javax.servlet.ServletContextListener;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import net.pi.pimodule.db.SensorLocSql;
 import net.pi.pimodule.db.SensorSql;
 import net.pi.pimodule.serial.SerialHandler;
 import net.pi.pimodule.thread.ThreadManager;
@@ -32,6 +33,7 @@ public class InitManager implements ServletContextListener    {
 
 			if (runningOnPi) {
 				new SensorSql().createTable();
+				new SensorLocSql().createTable();
 				
 				long sampleRate = 1000 * 60 * 5; // 5 min
 				logger.info("Starting temperature with sample rate: " + sampleRate + " in millis. In min: " + ( (sampleRate /1000) / 60) );

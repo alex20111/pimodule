@@ -16,26 +16,32 @@ export class SensorService {
   loadAllSensors(): Observable<Sensor[]> {
     return this.http.get<Sensor[]>(`http://${Constants.HOST_ADDRESS}:8081/web/sensorsConfig/sensorList`);
   }
-  loadSensorById(id: string): Observable<Sensor | Message>{
+  loadSensorById(id: string): Observable<Sensor | Message> {
 
-    console.log("sendingL " , id);
+    console.log("sendingL ", id);
 
     // console.log(typeof(id));
 
-    return this.http.post<Sensor| Message>(`http://${Constants.HOST_ADDRESS}:8081/web/sensorsConfig/fetchSensorById`, id);
+    return this.http.post<Sensor | Message>(`http://${Constants.HOST_ADDRESS}:8081/web/sensorsConfig/fetchSensorById`, id);
   }
 
-  updateSensor(sensor: Sensor): Observable<Message>{
-    return this.http.post<Message>(`http://${Constants.HOST_ADDRESS}:8081/web/sensorsConfig/updateSensor`, sensor  ); 
+  updateSensor(sensor: Sensor): Observable<Message> {
+    return this.http.post<Message>(`http://${Constants.HOST_ADDRESS}:8081/web/sensorsConfig/updateSensor`, sensor);
   }
 
-  deleteSensor(sensorId: string):Observable<Message>{
-    return this.http.post<Message>(`http://${Constants.HOST_ADDRESS}:8081/web/sensorsConfig/deleteSensor`, sensorId  ); 
+  deleteSensor(sensorId: string): Observable<Message> {
+    return this.http.post<Message>(`http://${Constants.HOST_ADDRESS}:8081/web/sensorsConfig/deleteSensor`, sensorId);
   }
 
-  messages():Observable<Message[]> {
+  messages(): Observable<Message[]> {
     return this.http.get<Message[]>(`http://${Constants.HOST_ADDRESS}:8081/web/sensorsConfig/messages`);
   }
+
+
+  loadAllSensorLocation(): Observable<SensorLoc[]> {
+    return this.http.get<SensorLoc[]>(`http://${Constants.HOST_ADDRESS}:8081/web/sensorsConfig/locations`);
+  }
+
 }
 
 export class Sensor {
@@ -62,4 +68,13 @@ export enum SensorType {
   TEMPERATURE = "TEMPERATURE",
   GARDEN = "GARDEN",
   LED = "LED"
+}
+
+export class SensorLoc {
+  id: number = -1;
+  sensorLocation: string = "";
+  description: string = "";
+  sensorIdFk: number = -1;
+
+  sensorName: string = "";
 }

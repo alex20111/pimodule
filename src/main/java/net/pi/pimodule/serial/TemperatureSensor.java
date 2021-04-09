@@ -31,58 +31,58 @@ public class TemperatureSensor extends SensorBase {
 
 	private static final Logger logger = LogManager.getLogger(TemperatureSensor.class);
 
-	private String command = "";
-	private boolean waitForReply = true;
+//	private String command = "";
+//	private boolean waitForReply = true;
+//
+//	private SensorType type;
+//	private String sensorId = "";
+//
+//	public TemperatureSensor sendInitCommand(SensorEntity sensor) {
+//		//calculate date in seconds, compensate for eastern time (-4)
+//		type = sensor.getSensorType();
+//		sensorId = sensor.getSensorId();
+//		command = formatInitString(sensor);
+//		waitForReply = true;
+//		return this;
+//	}
+//	public TemperatureSensor sendOk(SensorEntity sensor) {
+//		type = sensor.getSensorType();
+//		sensorId = sensor.getSensorId();
+//		command = START_MARKER + OK_CMD + type.getType() + sensor.getSensorId() + END_MARKER;
+//		waitForReply = false;
+//		return this;
+//	}
 
-	private SensorType type;
-	private String sensorId = "";
-
-	public TemperatureSensor sendInitCommand(SensorEntity sensor) {
-		//calculate date in seconds, compensate for eastern time (-4)
-		type = sensor.getSensorType();
-		sensorId = sensor.getSensorId();
-		command = formatInitString(sensor);
-		waitForReply = true;
-		return this;
-	}
-	public TemperatureSensor sendOk(SensorEntity sensor) {
-		type = sensor.getSensorType();
-		sensorId = sensor.getSensorId();
-		command = START_MARKER + OK_CMD + type.getType() + sensor.getSensorId() + END_MARKER;
-		waitForReply = false;
-		return this;
-	}
-
-	public boolean go() {
-		Boolean success = true;
-		try {
-
-			SerialHandler.getInstance().sendTeensyStringCommand(command);
-
-			if (waitForReply) {
-				success = sensorReplied.poll(4000, TimeUnit.MILLISECONDS);
-
-				if (success == null) {
-					logger.debug("Timeout, null returned");
-					return false;
-				}
-			}
-
-		} catch (IllegalStateException | IOException | InterruptedException  e) {
-			logger.error("Error in GO() ",e);
-			SensorSql sql = new SensorSql();
-			try {
-				SensorEntity sensorEntity = sql.findSensor(type, sensorId);
-				sensorEntity.setErrorField("ERROR: Error while tring to talk to the sensor, Logs. Error: " + e.getMessage());
-				sql.updateSensor(sensorEntity);
-			} catch (ClassNotFoundException | SQLException e1) {
-				logger.error("Error updating entity ",e);
-			}
-
-			success = false;
-		}
-		return success;
-	}
+//	public boolean go() {
+//		Boolean success = true;
+//		try {
+//
+//			SerialHandler.getInstance().sendTeensyStringCommand(command);
+//
+//			if (waitForReply) {
+//				success = sensorReplied.poll(4000, TimeUnit.MILLISECONDS);
+//
+//				if (success == null) {
+//					logger.debug("Timeout, null returned");
+//					return false;
+//				}
+//			}
+//
+//		} catch (IllegalStateException | IOException | InterruptedException  e) {
+//			logger.error("Error in GO() ",e);
+//			SensorSql sql = new SensorSql();
+//			try {
+//				SensorEntity sensorEntity = sql.findSensor(type, sensorId);
+//				sensorEntity.setErrorField("ERROR: Error while tring to talk to the sensor, Logs. Error: " + e.getMessage());
+//				sql.updateSensor(sensorEntity);
+//			} catch (ClassNotFoundException | SQLException e1) {
+//				logger.error("Error updating entity ",e);
+//			}
+//
+//			success = false;
+//		}
+//		return success;
+//	}
 
 	/**
 	 * Command to send to attiny through Teensy.
@@ -147,29 +147,29 @@ public class TemperatureSensor extends SensorBase {
 		return null;
 	}
 
-	private void awaitSensorReply(SensorEntity sensor, SensorSql sql) {
-
-		new Thread(new Runnable() {
-
-			@Override
-			public void run() {
-				//send new update
-				boolean reInitSuccess = sendInitCommand(sensor).go();
-				//if we have a success, the DB will already be updated..
-				if (!reInitSuccess) {
-					sensor.setErrorField("ERROR: no reply when trying to re-init the sensor. Re-try");
-					try {
-						sql.updateSensor(sensor);
-					} catch (ClassNotFoundException | SQLException e) {
-						Message msg = new Message("ERROR - Update", "Sensor " + sensor.getSensorType().getType() + sensor.getSensorId() + " update error: " + e.getMessage() ); 
-						SharedData.getInstance().addToMessage(msg);
-						logger.error("awaitSensorReply: " , e);
-					}
-				}				
-			}			
-		}).start();
-
-	}
+//	private void awaitSensorReply(SensorEntity sensor, SensorSql sql) {
+//
+//		new Thread(new Runnable() {
+//
+//			@Override
+//			public void run() {
+//				//send new update
+//				boolean reInitSuccess = sendInitCommand(sensor).go();
+//				//if we have a success, the DB will already be updated..
+//				if (!reInitSuccess) {
+//					sensor.setErrorField("ERROR: no reply when trying to re-init the sensor. Re-try");
+//					try {
+//						sql.updateSensor(sensor);
+//					} catch (ClassNotFoundException | SQLException e) {
+//						Message msg = new Message("ERROR - Update", "Sensor " + sensor.getSensorType().getType() + sensor.getSensorId() + " update error: " + e.getMessage() ); 
+//						SharedData.getInstance().addToMessage(msg);
+//						logger.error("awaitSensorReply: " , e);
+//					}
+//				}				
+//			}			
+//		}).start();
+//
+//	}
 
 	private TempEntity getTemperatureData(SensorData sensorData) {
 		//dt000,94.3,2332,4344    --> d = data, t = temp , 000 = sensor id, 94.3 = temperature, 2332 = humidity, 4344 = batt voltage. This is for SI7021.
@@ -209,15 +209,42 @@ public class TemperatureSensor extends SensorBase {
 				}
 			}
 
+
+
 			temp.setBatteryLevel(String.valueOf(fmtBatt));
 			temp.setHumidity(humidity);
 			temp.setRecordedDate(new Date());
 			temp.setRecorderName("TEMP" + sensorData.getSensorId());
-			temp.setTempC(dataSplit[1]);
+
+			Float floatTmp = stringToFloat(dataSplit[1]);
+
+			temp.setTempC(String.valueOf(floatTmp));
 		}
 
 		return temp;
 	}
+
+	private Float stringToFloat(String nbr) {
+
+		//check if float
+		if (nbr.lastIndexOf(".") != -1 ) {
+
+			try{
+				return Float.parseFloat(nbr);
+			}catch(NumberFormatException e){
+				return 0.0f;
+			}
+		}else {
+			try{
+				float newNbr =  Float.parseFloat(nbr);
+				
+				return  newNbr / 100;
+			}catch(NumberFormatException e){
+				return 0.0f;
+			}
+		}
+	}
+	
 
 
 	//  <dp091232-3.43> =  1 = cmd, 2= sensor type, 3-6 = id, 7 to end = data

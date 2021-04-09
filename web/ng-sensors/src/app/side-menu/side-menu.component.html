@@ -8,7 +8,7 @@
         <li class="active">
 
             <a href="#pageSubmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle"
-                (click)="collapse1.toggle()">Sensors</a>
+                (click)="collapse1.toggle()">Sensors</a> 
 
             <div #collapse1="ngbCollapse" [(ngbCollapse)]="dropDownCollapsed">
                 <div class="card">
@@ -28,6 +28,9 @@
                     </div>
                 </div>
             </div>
+        </li>
+        <li>
+            <a [routerLink]="'/location'">Sensor Location</a>
         </li>
         <li>
             <a href="#">About</a>
