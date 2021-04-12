@@ -38,6 +38,9 @@ public class SensorEntity {
 	private String description		= "";
 	private String errorField		= "";
 	
+	
+	private SensorLocation sensorLocation;
+	
 	public SensorEntity(){}	
 	
 	public SensorEntity(ResultSet rs) throws SQLException{
@@ -170,13 +173,21 @@ public class SensorEntity {
 		this.errorField = errorField;
 	}
 
+	public SensorLocation getSensorLocation() {
+		return sensorLocation;
+	}
+
+	public void setSensorLocation(SensorLocation sensorLocation) {
+		this.sensorLocation = sensorLocation;
+	}
+
 	@Override
 	public String toString() {
 		return "SensorEntity [id=" + id + ", sensorId=" + sensorId + ", sensorType=" + sensorType + ", transFreq="
 				+ transFreq + ", lastTransmit=" + lastTransmit + ", lastUpdated=" + lastUpdated + ", powerSave="
 				+ powerSave + ", pwSaveStart=" + pwSaveStart + ", pwSaveEnd=" + pwSaveEnd + ", pwSaveTransFreq="
 				+ pwSaveTransFreq + ", battLvl=" + battLvl + ", configured=" + configured + ", description="
-				+ description + ", errorField=" + errorField + "]";
+				+ description + ", errorField=" + errorField + " sensorLocation= " + sensorLocation + "]";
 	}
 
 

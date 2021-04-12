@@ -15,11 +15,12 @@ export class ManageLocationComponent implements OnInit {
   locId: string = "";
 
   submitted: boolean = false;
+  loading: boolean = false;
   location: SensorLoc;
 
   sensorLocForm: FormGroup;
 
-  constructor(private sensorService: SensorService, private formBuilder: FormBuilder,  private router: Router) { }
+  constructor(private sensorService: SensorService, private formBuilder: FormBuilder, private router: Router) { }
 
   ngOnInit(): void {
 
@@ -27,9 +28,9 @@ export class ManageLocationComponent implements OnInit {
     this.locId = window.history.state.id;
     console.log("started locations,action: ", this.action, this.locId);
 
-    if (this.action === 'add'){
+    if (this.action === 'add') {
       this.generateForm(new SensorLoc());
-    }else{
+    } else {
       console.log("edit");
     }
 
@@ -42,6 +43,40 @@ export class ManageLocationComponent implements OnInit {
       s_sensor_fk: [locData.sensorIdFk]
     });   //, 
 
+
+  }
+  submit() {
+    this.errorMessage = "";
+    this.submitted = true;
+    console.log(this.sensorLocForm);
+    if (this.sensorLocForm.invalid) {
+      return;
+    }
+    this.loading = true;
+
+    let val = this.sensorLocForm.value;
+
+    console.log("form values: ", val);
+    let addLocationObj = new SensorLoc();
+    addLocationObj.id = -1;
+    addLocationObj.description = val.s_description;
+    addLocationObj.sensorIdFk = -1;
+    addLocationObj.sensorLocation = val.s_location;
+
+    console.log("Sending: " , addLocationObj);
+
+    this.sensorService.addSensorLocation(addLocationObj).subscribe(result => {
+      this.loading = false;
+      this.submitted = false;
+      console.log("result: " , result);
+      this.router.navigate(['/location']);
+    },
+      err => {
+        this.loading = false;
+        this.submitted = false;
+        console.log("Error: " , err);
+        this.errorMessage = err.error.description + '<br/>' + err.message;
+      });
 
   }
   get frm() { return this.sensorLocForm.controls; }

@@ -9,9 +9,7 @@ public class SensorLocation {
 	public static String ID 			= "id";
 	public static String SENSOR_LOCATION= "sensor_loc";
 	public static String SENSOR_DESC    = "sensor_descr";
-	public static String SENSOR_ID_FK	= "sensor_ID_fk";
-	
-	
+	public static String SENSOR_ID_FK	= "sensor_ID_fk";	
 	
 	private int     id = -1;
 	private String sensorLocation = "";
@@ -20,6 +18,7 @@ public class SensorLocation {
 	
 	//Transient --> lazy loaded
 	private String sensorName = "";
+	private int sensorId 	  = -1;
 	
 	public SensorLocation(){}	
 	
@@ -69,5 +68,19 @@ public class SensorLocation {
 
 	public void setSensorName(String sensorName) {
 		this.sensorName = sensorName;
+	}
+
+	public int getSensorId() {
+		return sensorId;
+	}
+
+	public void setSensorId(int sensorId) {
+		this.sensorId = sensorId;
+	}
+
+	@Override
+	public String toString() {
+		return "SensorLocation [id=" + id + ", sensorLocation=" + sensorLocation + ", description=" + description
+				+ ", sensorIdFk=" + sensorIdFk + ", sensorName=" + sensorName + "]";
 	}
 }

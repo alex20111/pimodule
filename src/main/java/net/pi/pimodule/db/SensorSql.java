@@ -110,7 +110,18 @@ public class SensorSql {
 			if (rs!=null) {
 				while(rs.next()) {
 					SensorEntity sensor  = new SensorEntity(rs);
+
+					ResultSet rs2 = con.createSelectQuery("SELECT * FROM " + SensorLocation.TBL_NAME + " WHERE " + SensorLocation.SENSOR_ID_FK + " = :senId")
+							.setParameter("senId", sensor.getId())
+							.getSelectResultSet();
+
+					while(rs2.next()) {
+						SensorLocation sl = new SensorLocation(rs2);
+						sensor.setSensorLocation(sl);
+					}
+
 					sensors.add(sensor);
+
 				}
 			}
 
@@ -124,7 +135,7 @@ public class SensorSql {
 	}
 
 
-	public SensorEntity findSensorById(int id) throws SQLException, ClassNotFoundException {
+	public SensorEntity findSensorById(int id, boolean fetchLocation) throws SQLException, ClassNotFoundException {
 
 		DBConnection con = null;
 		SensorEntity sensor = null;
@@ -139,6 +150,20 @@ public class SensorSql {
 			if (rs!=null) {
 				while(rs.next()) {
 					sensor  = new SensorEntity(rs);
+
+					if (fetchLocation) {
+						logger.debug("findSensorById: fetchLocation: " + fetchLocation);
+
+						ResultSet rs2 = con.createSelectQuery("SELECT * FROM " + SensorLocation.TBL_NAME + " WHERE " + SensorLocation.SENSOR_ID_FK + " = :senId")
+								.setParameter("senId", id)
+								.getSelectResultSet();
+
+						while(rs2.next()) {
+							SensorLocation sl = new SensorLocation(rs2);
+							sensor.setSensorLocation(sl);
+							//							logger.debug("setSensorLocation: sl: " + sl);
+						}
+					}
 
 				}
 			}
@@ -290,8 +315,8 @@ public class SensorSql {
 		}
 	}
 
-
-	public void deleteSensor(int sensorId) throws ClassNotFoundException, SQLException {
+	//TODO - test delete sensor to see if it update the sql for the location to remove it.
+	public void deleteSensor(SensorEntity sensor) throws ClassNotFoundException, SQLException {
 		DBConnection con = null;
 		try{
 			con = getConnection();
@@ -299,8 +324,16 @@ public class SensorSql {
 			String query = "DELETE FROM " + SensorEntity.TBL_NAME + " where " + SensorEntity.ID + " = :id";
 
 			con.createSelectQuery(query)
-			.setParameter("id", sensorId)
+			.setParameter("id", sensor.getSensorId())
 			.delete();
+
+			//if there is a sensor location related to the sensor, remove the sensor from it.
+			if (sensor.getSensorLocation() != null) {
+				SensorLocSql locSql = new SensorLocSql();
+				SensorLocation loc = sensor.getSensorLocation();
+				loc.setSensorIdFk(-1);
+				locSql.updateLocation(loc);
+			}
 
 		}finally{
 			if (con!=null){

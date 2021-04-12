@@ -29,8 +29,10 @@
                         <td scope="row">{{i}}</td>
                         <td><fa-icon [icon]="sensorTypeIcon(sensor.sensorType)"></fa-icon>  </td>
                         <td style="text-align: center;">{{sensor.sensorId}}</td>
-                        <td style="text-align: center;">{{sensor.configured ? "Yes" : "No"}}</td>
-                        <td>Garden</td>
+                        <td style="text-align: center;">{{sensor.configured && sensor.lastUpdated ? "Yes" : !sensor.configured && sensor.lastUpdated ? "Yes. Updating data " : "No"}}</td>
+                        <td style="text-align: center;">
+                            {{sensor.sensorLocation ? sensor.sensorLocation.sensorLocation : "No Location defined"}}
+                        </td>
                         <td>{{sensor.transFreq}} min</td>
                         <td>{{ formatDate(sensor.lastTransmit) | date:'medium' }}  </td>
                         <td>
@@ -47,10 +49,10 @@
                             </span>
                         </td>
                         <td>{{sensor.battLvl}}</td>
-                        <td><button *ngIf="!sensor.configured " class="btn btn-success" routerLink="/manageSensor" [state]="{ action: 'add', id: sensor.id }"><fa-icon [icon]="faPlusCircle"></fa-icon></button>
+                        <td><button *ngIf="!sensor.configured &&  !sensor.lastUpdated" class="btn btn-success" routerLink="/manageSensor" [state]="{ action: 'add', id: sensor.id }"><fa-icon [icon]="faPlusCircle"></fa-icon></button>
                             
                             
-                            <button *ngIf="sensor.configured "class="btn btn-primary ml-1" routerLink="/manageSensor"
+                            <button *ngIf="sensor.lastUpdated "class="btn btn-primary ml-1" routerLink="/manageSensor"
                                 [state]="{ action: 'edit', id: sensor.id }">
                                 <fa-icon [icon]="faEdit"></fa-icon></button>
                                 <button class="btn btn-danger ml-1" (click)="deleteSensor(sensor.id)" >

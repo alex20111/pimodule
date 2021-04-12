@@ -18,14 +18,16 @@
             <div *ngIf="loadingList" class="spinner-border spinner-border-sm"></div>
             <div *ngIf="sensorLocList.length === 0 && !loadingList" >No Location found</div>
             <tr *ngFor="let loc of sensorLocList; index as i" >
+                <td>{{i}}</td>
                 <td>{{loc.sensorLocation}}</td>
                 <td>{{loc.sensorName.length > 0 ? loc.sensorName : "No sensor associated"}}</td>
                 <td>{{loc.description}}</td>
-                <td><button class="btn btn-primary ml-1" routerLink="/manageLocation"
+                <td>
+                    <button class="btn btn-primary ml-1 float-right" routerLink="/manageLocation"
                         [state]="{ action: 'edit', id: loc.id }">
                         <fa-icon [icon]="faEdit"></fa-icon>
                     </button>
-                    <button class="btn btn-danger ml-1" (click)="deleteLocation(loc.id)" >
+                    <button class="btn btn-danger ml-1 float-right" (click)="deleteLocation(loc.id)" >
                         <fa-icon [icon]="faTrashAlt"></fa-icon></button>
                 </td>
             </tr>

@@ -44,7 +44,7 @@ public class SensorConfigService {
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getSensorList() {
-//		logger.debug("getSensorList ");	
+		//		logger.debug("getSensorList ");	
 
 		Message msg = new Message("ERROR","getSensorList error");
 		Status status = Status.FORBIDDEN;
@@ -56,7 +56,7 @@ public class SensorConfigService {
 		try {
 			List<SensorEntity> sensorList = sql.getAllSensors();
 
-//			logger.debug("sensorList:  " + sensorList);	
+			//			logger.debug("sensorList:  " + sensorList);	
 
 			return Response.ok(sensorList).build();
 
@@ -73,7 +73,7 @@ public class SensorConfigService {
 	@Consumes(MediaType.TEXT_PLAIN)
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response fetchSensorByIdStr(String id) {
-		logger.debug("getSensorById ");	
+		logger.debug("getSensorById:  " + id);	
 
 		Message msg = new Message("ERROR","getSensorById error");
 		Status status = Status.FORBIDDEN;
@@ -84,7 +84,7 @@ public class SensorConfigService {
 
 
 		try {
-			SensorEntity sensor = sql.findSensorById(Integer.parseInt(id));
+			SensorEntity sensor = sql.findSensorById(Integer.parseInt(id), true);
 
 			if (sensor != null) {
 
@@ -124,8 +124,60 @@ public class SensorConfigService {
 				sensor.setPwSaveStart(0);
 				sensor.setPwSaveTransFreq(0);
 			}
-			
+
 			sql.updateSensor(sensor);
+
+			//also update location
+			//1st find if the sensor was attached to an other location.
+			sqlLoc = new SensorLocSql();
+
+			if (sensor.getSensorLocation().getId() != -1) {
+				SensorLocation loc = sqlLoc.findLocationBySensorId(sensor.getId()); //find current sensor location
+				if (loc != null && sensor.getId() != loc.getSensorIdFk()) {
+					logger.debug("Loc different from the one provided");
+					//we have a location already attached and it's not the same .. remove
+					loc.setSensorIdFk(-1);
+					sqlLoc.updateLocation(loc);
+					//now find the new one and verify that it is free.
+					SensorLocation newLoc = sqlLoc.findLocationById(sensor.getSensorLocation().getId(), false);
+					//verify that is it not already attached.
+					if (newLoc != null && newLoc.getSensorIdFk() < 0) {
+						//update with new sensor id
+						newLoc.setSensorIdFk(sensor.getId());
+						sqlLoc.updateLocation(newLoc);
+					}else {
+						status = Status.BAD_REQUEST;
+						msg = new Message("ERROR","Location already attatched to an other sensor. Sensor ID:  " + newLoc.getSensorIdFk() + " Current sensor id:" + sensor.getId());
+						logger.info("Sensor location already attatched to an other one");
+						return Response.status(status).entity(msg).build();
+					}
+				}else if(loc == null) {
+					logger.debug("Loc null when adding a new one");
+					//no location found for the sensor, then attach
+					SensorLocation newLoc = sqlLoc.findLocationById(sensor.getSensorLocation().getId(), false);
+					//verify that is it not already attached.
+					if (newLoc != null && newLoc.getSensorIdFk() < 0) {
+						//update with new sensor id
+						newLoc.setSensorIdFk(sensor.getId());
+						sqlLoc.updateLocation(newLoc);
+					}else {
+						status = Status.BAD_REQUEST;
+						msg = new Message("ERROR","Location already attatched to an other sensor. Sensor ID attatched to:  " + newLoc.getSensorIdFk() + " Current sensor id:" + sensor.getId());
+						logger.info("Sensor location already attatched to an other one. Sensor location id to attatch to: " + sensor.getSensorLocation().getId() + "  new loc sensorId Fk: " + newLoc.getSensorIdFk() + " Current sensor id: " + sensor.getId());
+						return Response.status(status).entity(msg).build();
+						//TODO error message.
+					}
+				}
+			}else if (sensor.getSensorLocation().getId() == -1 ){
+				logger.debug("Sesor is -1, remove it from db");
+				//removing location from sensor. find if any location has the sensor id in it and remove it.				
+				SensorLocation loc = sqlLoc.findLocationBySensorId(sensor.getId()); //find current sensor location
+				if (loc != null) {
+					loc.setSensorIdFk(-1);
+					sqlLoc.updateLocation(loc);
+				}
+			}
+
 
 			SensorType type = sensor.getSensorType();
 
@@ -136,17 +188,20 @@ public class SensorConfigService {
 				boolean success = false;
 				if (type == SensorType.POOL) {		
 
-					 success = new PoolSensor().sendInitCommand(sensor).go();
-				
+					success = new PoolSensor().sendInitCommand(sensor).go();
+
 				}else if (type == SensorType.TEMPERATURE) {		
 
 					success = new TemperatureSensor().sendInitCommand(sensor).go();			
-					
+
 				}
-				
+
 				if (!success ) {   
 					//save on DB
-					msg = new Message("ERROR", "Data Saved but no OK replies when trying to initialize the sensor, try again");
+					String errorMsg = "Data Saved. But no OK replies when trying to initialize the sensor, try again";
+					msg = new Message("ERROR", errorMsg);
+					sensor.setErrorField("ERROR " + errorMsg);
+					sql.updateSensor(sensor);
 					status = Status.SERVICE_UNAVAILABLE;
 					return Response.status(status).entity(msg).build();
 				}else {
@@ -184,13 +239,24 @@ public class SensorConfigService {
 
 		try {
 			int sensorId = Integer.parseInt(id);
-			SensorEntity sensor = sql.findSensorById(sensorId);
+			SensorEntity sensor = sql.findSensorById(sensorId, true);
 
 			if (sensor != null) {
 
 				logger.debug("Deleting sensor:  " + sensor);
 				msg = new Message("SUCCESS", "Sensor " + sensor.getSensorType().getType() + sensor.getSensorId() + " deleted");
-				sql.deleteSensor(sensorId);
+
+				sqlLoc = new SensorLocSql();
+				SensorLocation loc = sqlLoc.findLocationBySensorId(sensor.getId());
+
+				if (loc != null) {
+					loc.setSensorIdFk(-1);
+					sqlLoc.updateLocation(loc);
+					logger.debug("deleteSensorById : Sensor location updated. : " + loc.getSensorLocation());
+				}
+
+
+				sql.deleteSensor(sensor);
 
 				return Response.ok(msg).build();
 			}else {
@@ -205,29 +271,37 @@ public class SensorConfigService {
 
 		return Response.status(status).entity(msg).build();
 	}
-	
+
 	@Path("messages")
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getMessages() {
-		
+
 		@SuppressWarnings("unchecked")
 		List<Message> messages = (List<Message>)SharedData.getInstance().getSharedObject(Constants.MESSAGE_ERROR);
-		
+
 		if (messages == null) {
 			messages = new ArrayList<>();
 		}
-		
+
 		return Response.ok(messages).build();
 	}
 
-	
+
+	/*  LOCATION methods            */
+
 	@Path("locations")
-	@GET
+	@POST
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response getSensorLocationList() {
-		
-		Message msg = new Message("ERROR","getSensorLocationList error");
+	@Consumes(MediaType.TEXT_PLAIN)
+	public Response getSensorLocationList(String request) {  //because we will need to fetch the location in the manage sensor and manage location page..
+		logger.debug("getSensorLocationList: request: " + request);
+
+		//request types: ALL_LOC_NO_SENSOR  // all location but don't retrieve the sensor entity 
+		//ALL_LOC_WITH_SENSOR				// all location with sensors if any associated to it
+		//ALL_LOC_FREE (No associated sensors) // all location that has no sensor associated to it ( no sensor FK )
+
+		Message msg = new Message("ERROR","getSensorLocationList error. request: " + request);
 		Status status = Status.FORBIDDEN;
 
 		if (sqlLoc == null) {
@@ -235,9 +309,18 @@ public class SensorConfigService {
 		}
 
 		try {
-			
-			List<SensorLocation> locList = sqlLoc.getAllSensorLocation(true);
 
+			List<SensorLocation> locList = new ArrayList<>();
+			if("ALL_LOC_NO_SENSOR".equalsIgnoreCase(request)) {
+				locList = sqlLoc.getAllSensorLocation(false);
+			}else if("ALL_LOC_WITH_SENSOR".equalsIgnoreCase(request)) {
+				locList = sqlLoc.getAllSensorLocation(true);
+			}else if("ALL_LOC_FREE".equalsIgnoreCase(request)) {
+				locList = sqlLoc.getAllLocationWithoutSensors();
+			}else {
+				status = Status.BAD_REQUEST;
+				msg = new Message("ERROR", "BAD request. Request recieved: " + request);
+			}
 
 			return Response.ok(locList).build();
 
@@ -248,6 +331,155 @@ public class SensorConfigService {
 
 		return Response.status(status).entity(msg).build();
 	}
-	
 
+	@Path("addLocation")
+	@POST
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	public Response addNewLocation(SensorLocation location) {  //because we will need to fetch the location in the manage sensor and manage location page.. 
+
+		//request types: ALL_LOC_NO_SENSOR  // all location but don't retrieve the sensor entity 
+		//ALL_LOC_WITH_SENSOR				// all location with sensors if any associated to it
+		//ALL_LOC_FREE (No associated sensors) // all location that has no sensor associated to it ( no sensor FK )
+
+		Message msg = new Message("ERROR","addNewLocation error");
+		Status status = Status.FORBIDDEN;
+
+		if (sqlLoc == null) {
+			sqlLoc = new SensorLocSql();
+		}
+
+		try {
+			logger.debug("Adding: " + location);
+
+			sqlLoc.addLocation(location);
+
+			msg = new Message("SUCCESS", "Location added successfully");
+
+			return Response.ok().entity(msg).build();
+
+		} catch (ClassNotFoundException | SQLException e) {
+			logger.error("Error in addNewLocation. " , e);
+			status = Status.BAD_REQUEST;
+			msg = new Message("ERROR","addNewLocation error: " + e.getMessage());
+		}		
+
+		return Response.status(status).entity(msg).build();
+	}
+
+	@Path("updateLocation")
+	@POST
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	public Response updateLocation(SensorLocation location) {  //because we will need to fetch the location in the manage sensor and manage location page..
+		logger.debug("updateLocation: request: " + location);
+
+
+		Message msg = new Message("ERROR","updateLocation error. request: " + location);
+		Status status = Status.FORBIDDEN;
+
+		if (sqlLoc == null) {
+			sqlLoc = new SensorLocSql();
+		}
+
+		try {
+
+			sqlLoc.updateLocation(location);
+
+			msg = new Message("SUCCESS", "Location updated");
+
+
+			return Response.ok(msg).build();
+
+		} catch (ClassNotFoundException | SQLException e) {
+			logger.error("Error in updateLocation. " , e);
+			status = Status.BAD_REQUEST;
+		}		
+
+		return Response.status(status).entity(msg).build();
+	}
+
+	@Path("deleteLocation")
+	@POST
+	@Consumes(MediaType.TEXT_PLAIN)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response deleteLocationById(String id) {
+		logger.debug("delete location by ID:  " + id);	
+
+		Message msg = new Message("ERROR","Error deleting location");
+		Status status = Status.FORBIDDEN;
+
+		if (sqlLoc == null) {
+			sqlLoc = new SensorLocSql();
+		}
+
+
+		try {
+			int sensorId = Integer.parseInt(id);
+			SensorLocation loc = sqlLoc.findLocationById(sensorId, true);
+
+			if (loc  != null) {
+				//just delete..
+				sqlLoc.deleteLocation(loc.getId());
+			}else {
+				status = Status.BAD_REQUEST;
+				msg = new Message("ERROR","Location ID " + id + " not found, cannot delete");
+			}
+
+			//			if (sensor != null) {
+			//
+			//				logger.debug("Deleting sensor:  " + sensor);
+			//				msg = new Message("SUCCESS", "Sensor " + sensor.getSensorType().getType() + sensor.getSensorId() + " deleted");
+			//				sql.deleteSensor(sensor);
+			//
+			//				return Response.ok(msg).build();
+			//			}else {
+			//				status = Status.BAD_REQUEST;
+			//				msg = new Message("ERROR","Sensor ID " + id + " not found, cannot delete");
+			//			}
+
+		} catch (ClassNotFoundException | SQLException e) {
+			logger.error("Error in deleteSensorById. " , e);
+			status = Status.BAD_REQUEST;
+		}		
+
+		return Response.status(status).entity(msg).build();
+	}
+
+	@Path("fetchLocationById")
+	@POST
+	@Consumes(MediaType.TEXT_PLAIN)
+	@Produces(MediaType.APPLICATION_JSON)
+	public Response getLocationById(String id) {
+		logger.debug("getLocationById:  " + id);	
+
+		Message msg = new Message("ERROR","getSensorById error");
+		Status status = Status.FORBIDDEN;
+
+		if (sqlLoc == null) {
+			sqlLoc = new SensorLocSql();
+		}
+
+		try {
+
+			SensorLocation loc = sqlLoc.findLocationById(Integer.parseInt(id), true);
+
+			if (loc != null) {
+				logger.debug("SensorLocation:  " + loc);	
+
+				return Response.ok(loc).build();
+
+			}else {
+				status = Status.BAD_REQUEST;
+				msg = new Message("ERROR","SensorLocation ID " + id + " not found");
+			}
+
+			//
+		} catch (ClassNotFoundException | SQLException e) {
+			logger.error("Error in getLocationById. " , e);
+			status = Status.BAD_REQUEST;
+		}		
+
+		return Response.status(status).entity(msg).build();
+	}
 }

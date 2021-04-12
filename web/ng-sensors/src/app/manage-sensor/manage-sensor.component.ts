@@ -1,8 +1,10 @@
-import { Sensor, SensorService } from './../services/sensor.service';
+import { Sensor, SensorLoc, SensorService } from './../services/sensor.service';
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { NavigationExtras, Router } from '@angular/router';
 import { numberValidator } from '../_helper/number.validator';
+import { faTrashAlt } from '@fortawesome/free-solid-svg-icons';
+import { ThrowStmt } from '@angular/compiler';
 
 @Component({
   selector: 'app-manage-sensor',
@@ -22,7 +24,11 @@ export class ManageSensorComponent implements OnInit {
   loading: boolean  = false;
 
   sensor: Sensor;
+
+  locList: SensorLoc[] = [];
   powerSaveTime: PsTime[] = [];
+
+  faTrashAlt = faTrashAlt;
 
   constructor(private sensorService: SensorService, private formBuilder: FormBuilder,  private router: Router) { }
 
@@ -32,7 +38,7 @@ export class ManageSensorComponent implements OnInit {
     this.sensorId = window.history.state.id;
 
     console.log(window.history.state.action,window.history.state.id );
-
+    
     this.generateForm(new Sensor());
 
     //load  from database
@@ -44,6 +50,11 @@ export class ManageSensorComponent implements OnInit {
         this.sensor = result as Sensor;
         this.generateForm(data);
       }
+
+      //check if we need to load the sensor location list if no location exist
+      if (!data.sensorLocation){
+        this.loadSensorLocationList();
+      }
     },
       err => {
         this.errorMessage = err.error.description + '<br/>' + err.message;
@@ -52,6 +63,7 @@ export class ManageSensorComponent implements OnInit {
      this.powerSaveHourList();
 
   }
+  
 
   generateForm(sensorData: Sensor) {
     this.sensorForm = this.formBuilder.group({
@@ -60,7 +72,8 @@ export class ManageSensorComponent implements OnInit {
       s_ps_start: [sensorData.pwSaveStart],
       s_ps_end: [sensorData.pwSaveEnd],
       s_ps_trans_freq: [sensorData.pwSaveTransFreq],
-      description: [sensorData.description]
+      description: [sensorData.description],
+      s_location_id: sensorData.sensorLocation ? sensorData.sensorLocation.id : -1 //actually the sensor location ID passed here.
     });   //, 
 
 
@@ -84,7 +97,12 @@ export class ManageSensorComponent implements OnInit {
     this.sensor.pwSaveStart = val.s_ps_start;
     this.sensor.pwSaveEnd = val.s_ps_end;
     this.sensor.pwSaveTransFreq = val.s_ps_trans_freq;
-
+   
+    //since we have the ID we need to re-ini the location with the current saved ID. 
+    //so that the update methode find the right ID to update.
+    let locIdValue = parseInt(val.s_location_id);
+    this.sensor.sensorLocation = this.locList.find(x => x.id === locIdValue);
+    
     console.log("Updated sensor: " , this.sensor);
 
     this.sensorService.updateSensor(this.sensor).subscribe( result => {
@@ -97,6 +115,7 @@ export class ManageSensorComponent implements OnInit {
       console.log("update error: " , err);
       this.errorMessage = err.error.description + '<br/>' + err.message;
       this.loading = false;
+      this.submitted = false;
     });
  
   }
@@ -129,6 +148,40 @@ export class ManageSensorComponent implements OnInit {
     $event.preventDefault(); //to not sub,mit the form
 
     this.router.navigate(['/']);
+  }
+
+  deleteLocationRelation($event: any){
+    $event.preventDefault(); //to not sub,mit the form
+    let yes = confirm("Are you sure?");
+
+    if (yes){
+      this.loading = true;
+      // console.log("Remove this location: " , this.sensor.sensorLocation);
+      let toUpdLocation = this.sensor.sensorLocation;
+      toUpdLocation.sensorIdFk = -1;
+      this.sensorService.updateLocation(toUpdLocation).subscribe(result => {
+        this.sensor.sensorLocation = null;
+        this.loadSensorLocationList();
+        this.loading = false;
+        this.sensorForm.controls.s_location_id.setValue(-1);
+      },
+      err => {
+        this.errorMessage = err.error.description + '<br/>' + err.message;
+        console.log("error: " , err);
+        this.loading = false;
+      });
+    }
+  }
+
+  loadSensorLocationList(){
+    this.sensorService.loadAllSensorLocation("ALL_LOC_FREE").subscribe(result => {
+      console.log("result location", result);
+      this.locList = result;
+    }, 
+    err =>{
+      this.errorMessage = err.error.description + '<br/>' + err.message;
+      console.log("error: " , err);
+    })
   }
 
   get frm() { return this.sensorForm.controls; }

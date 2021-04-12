@@ -19,7 +19,7 @@ import net.pi.pimodule.common.Constants;
 import net.pi.pimodule.enums.SensorType;
 
 public class SensorLocSql {
-	
+
 	private static final Logger logger = LogManager.getLogger(SensorLocSql.class);
 
 	public void createTable() throws IOException, SQLException, ClassNotFoundException {
@@ -37,15 +37,24 @@ public class SensorLocSql {
 
 			logger.debug("Creating SensorLocation table. Teble exist: " + exist);
 
+			//			if (exist) {
+			//				logger.debug("Dropping table !!!!!!!!!!!!!!!");
+			//				//drop table
+			//				String sqlDrop = "DROP TABLE " +SensorLocation.TBL_NAME + ";";
+			//				con.createSelectQuery(sqlDrop);
+			//				con.executeUpdate();
+			//				exist = false;
+			//			}
+
 
 			if (!exist) {
 				logger.info("SensorSql does not exist , creating");
 				List<ColumnType> columns = new ArrayList<ColumnType>();					
 				columns.add(new ColumnType(SensorLocation.ID, true).INT().setPKCriteria(new PkCriteria().autoIncrement()));
 				columns.add(new ColumnType(SensorLocation.SENSOR_LOCATION).VarChar(20));
-				columns.add(new ColumnType(SensorLocation.SENSOR_DESC).INT());
+				columns.add(new ColumnType(SensorLocation.SENSOR_DESC).VarChar(1500));
 				columns.add(new ColumnType(SensorLocation.SENSOR_ID_FK).INT());
-		
+
 
 				con.createTable(SensorLocation.TBL_NAME, columns);	
 
@@ -70,20 +79,52 @@ public class SensorLocSql {
 			if (rs!=null) {
 				while(rs.next()) {
 					SensorLocation loc  = new SensorLocation(rs);
-					
-					
+
+
 					if (sensorName && loc.getSensorIdFk() > 0) {
 						ResultSet rs2 = con.createSelectQuery("SELECT "+SensorEntity.SENSOR_ID+","+SensorEntity.SENSOR_TYPE+""
-										+ " FROM " + SensorEntity.TBL_NAME + " WHERE " + SensorEntity.ID + " = :sensorId")
+								+ " FROM " + SensorEntity.TBL_NAME + " WHERE " + SensorEntity.ID + " = :sensorId")
 								.setParameter("sensorId", loc.getSensorIdFk())
 								.getSelectResultSet();
-						
+
 						while(rs2.next()) {
-							SensorType t = SensorType.valueOf(rs.getString(SensorEntity.SENSOR_TYPE));
-							loc.setSensorName(t.getType() + rs.getString(SensorEntity.SENSOR_ID));
+							SensorType t = SensorType.valueOf(rs2.getString(SensorEntity.SENSOR_TYPE));
+							loc.setSensorName(t.name() + " " + rs2.getString(SensorEntity.SENSOR_ID));
 						}
 					}
-					
+
+					locations.add(loc);
+				}
+			}
+
+		}finally {
+			if (con != null) {
+				con.close();
+			}
+		}
+
+		return locations;
+	}
+	/**
+	 * Get all sensors location that does not have a sensor associated to it,.
+	 * @return
+	 * @throws SQLException
+	 * @throws ClassNotFoundException
+	 */
+	public List<SensorLocation> getAllLocationWithoutSensors() throws SQLException, ClassNotFoundException {
+
+		DBConnection con = null;
+		List<SensorLocation> locations = new ArrayList<>();
+		try {
+			con = getConnection();
+
+			ResultSet rs = con.createSelectQuery("SELECT * FROM " + SensorLocation.TBL_NAME +" WHERE " + SensorLocation.SENSOR_ID_FK + " < 0")
+					.getSelectResultSet();
+
+
+			if (rs!=null) {
+				while(rs.next()) {
+					SensorLocation loc  = new SensorLocation(rs);						
 					locations.add(loc);
 				}
 			}
@@ -121,6 +162,44 @@ public class SensorLocSql {
 
 		return loc;
 	}
+	public SensorLocation findLocationById(int locId, boolean withSensor) throws SQLException, ClassNotFoundException {
+		DBConnection con = null;
+		SensorLocation loc = null;
+		try {
+			con = getConnection();
+
+			ResultSet rs = con.createSelectQuery("SELECT * FROM " + SensorLocation.TBL_NAME + " WHERE " + SensorLocation.ID + " = :locId")
+					.setParameter("locId", locId)
+					.getSelectResultSet();
+
+
+			if (rs!=null) {
+				while(rs.next()) {
+					loc  = new SensorLocation(rs);
+
+					if (withSensor && loc.getSensorIdFk() > 0) {
+						ResultSet rs2 = con.createSelectQuery("SELECT "+SensorEntity.SENSOR_ID+","+SensorEntity.SENSOR_TYPE+""
+								+ " FROM " + SensorEntity.TBL_NAME + " WHERE " + SensorEntity.ID + " = :sensorId")
+								.setParameter("sensorId", loc.getSensorIdFk())
+								.getSelectResultSet();
+
+						while(rs2.next()) {
+							SensorType t = SensorType.valueOf(rs2.getString(SensorEntity.SENSOR_TYPE));
+							loc.setSensorName(t.name() + " " + rs2.getString(SensorEntity.SENSOR_ID));
+							loc.setSensorId(rs.getInt(SensorEntity.ID));
+						}
+					}
+				}
+			}
+
+		}finally {
+			if (con != null) {
+				con.close();
+			}
+		}
+
+		return loc;
+	}
 	public int addLocation(SensorLocation loc) throws SQLException, ClassNotFoundException {
 		DBConnection con = null;
 		int pk = -1;
@@ -141,7 +220,7 @@ public class SensorLocSql {
 
 		return pk;
 	}
-	
+
 	public void updateLocation(SensorLocation loc) throws SQLException, ClassNotFoundException {
 		//		logger.debug("Update temperature");
 		//		System.out.println("--upd--");
@@ -152,7 +231,7 @@ public class SensorLocSql {
 			.setParameter(SensorLocation.SENSOR_DESC, loc.getDescription())
 			.setParameter(SensorLocation.SENSOR_ID_FK, loc.getSensorIdFk())
 			.setParameter(SensorLocation.SENSOR_LOCATION, loc.getSensorLocation())
-			
+
 			.addUpdWhereClause("WHERE "+SensorLocation.ID+" = :idValue", loc.getId()).update();
 
 		}finally {
@@ -161,7 +240,7 @@ public class SensorLocSql {
 			}
 		}
 	}
-	
+
 
 	public void deleteLocation(int locId) throws ClassNotFoundException, SQLException {
 		DBConnection con = null;
@@ -180,7 +259,7 @@ public class SensorLocSql {
 			}
 		}
 	}
-	
+
 	private DBConnection getConnection() throws ClassNotFoundException, SQLException{
 
 		Database db = new Database("jdbc:h2:" +Constants.DB_URL,Constants.DB_USER, Constants.DB_PASS.toCharArray(), DbClass.H2);

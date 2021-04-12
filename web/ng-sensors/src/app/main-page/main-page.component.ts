@@ -81,7 +81,7 @@ export class MainPageComponent implements OnInit, OnDestroy {
   }
 
   deleteSensor(sensorId: string){
-    console.log(typeof(sensorId));
+    // console.log(typeof(sensorId));
 
     let yes = confirm("Are you sure?");
 
