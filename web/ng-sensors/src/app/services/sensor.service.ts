@@ -13,8 +13,12 @@ export class SensorService {
 
   }
 
-  loadAllSensors(): Observable<Sensor[]> {
-    return this.http.get<Sensor[]>(`http://${Constants.HOST_ADDRESS}:8081/web/sensorsConfig/sensorList`);
+  loadAllSensors(cmd: string): Observable<Sensor[]> {
+		//ALL_SENSORS --> all sensors with location or not.
+		//SENSORS_WITH_LOC --> sensors that only has location attatched to them
+		//SENSORS_WITH_NO_LOC --> all sensors that don't have a location attatched to it.
+
+    return this.http.post<Sensor[]>(`http://${Constants.HOST_ADDRESS}:8081/web/sensorsConfig/sensorList`, cmd);
   }
   loadSensorById(id: string): Observable<Sensor | Message> {
 
@@ -54,13 +58,13 @@ export class SensorService {
     return this.http.post<Message>(`http://${Constants.HOST_ADDRESS}:8081/web/sensorsConfig/updateLocation`, location);
   }
 
-  loadLocationById(id: string): Observable<Sensor | Message> {
+  loadLocationById(id: string): Observable<SensorLoc | Message> {
     console.log("senloadLocationByIddingL ", id);
-    return this.http.post<Sensor | Message>(`http://${Constants.HOST_ADDRESS}:8081/web/sensorsConfig/fetchLocationById`, id);
+    return this.http.post<SensorLoc | Message>(`http://${Constants.HOST_ADDRESS}:8081/web/sensorsConfig/fetchLocationById`, id);
   }
 
   deleteLocation(id: string): Observable<Message> {
-    console.log("deleteLocation ", id);
+    console.log("deleteLocation ", typeof(id));
     return this.http.post< Message>(`http://${Constants.HOST_ADDRESS}:8081/web/sensorsConfig/deleteLocation`, id);
   }
 
@@ -83,7 +87,7 @@ export class Sensor {
   description: string = "";
   errorField: string = "";
 
-  sensorLocation: SensorLoc;
+  sensorLocation: SensorLoc = new SensorLoc();
 }
 
 export enum SensorType {
@@ -101,4 +105,5 @@ export class SensorLoc {
   sensorIdFk: number = -1;
 
   sensorName: string = "";
+  sensorId: number = -1;
 }

@@ -95,8 +95,14 @@ public class SensorSql {
 
 		return sensor;
 	}
-
-	public List<SensorEntity> getAllSensors() throws SQLException, ClassNotFoundException {
+	/**
+	 * Get all sensors	
+	 * @param withLocation - also get the location fort he sensor if the sensor has a location
+	 * @return
+	 * @throws SQLException
+	 * @throws ClassNotFoundException
+	 */
+	public List<SensorEntity> getAllSensors(boolean withLocation) throws SQLException, ClassNotFoundException {
 
 		DBConnection con = null;
 		List<SensorEntity> sensors = new ArrayList<>();
@@ -111,17 +117,18 @@ public class SensorSql {
 				while(rs.next()) {
 					SensorEntity sensor  = new SensorEntity(rs);
 
-					ResultSet rs2 = con.createSelectQuery("SELECT * FROM " + SensorLocation.TBL_NAME + " WHERE " + SensorLocation.SENSOR_ID_FK + " = :senId")
-							.setParameter("senId", sensor.getId())
-							.getSelectResultSet();
+					if (withLocation) {
 
-					while(rs2.next()) {
-						SensorLocation sl = new SensorLocation(rs2);
-						sensor.setSensorLocation(sl);
+						ResultSet rs2 = con.createSelectQuery("SELECT * FROM " + SensorLocation.TBL_NAME + " WHERE " + SensorLocation.SENSOR_ID_FK + " = :senId")
+								.setParameter("senId", sensor.getId())
+								.getSelectResultSet();
+
+						while(rs2.next()) {
+							SensorLocation sl = new SensorLocation(rs2);
+							sensor.setSensorLocation(sl);
+						}
+						sensors.add(sensor);
 					}
-
-					sensors.add(sensor);
-
 				}
 			}
 
@@ -133,7 +140,86 @@ public class SensorSql {
 
 		return sensors;
 	}
+	/**
+	 * Get sensor that has no location attached.
+	 */
+	public List<SensorEntity> getAllSensorsWithNoLocation() throws SQLException, ClassNotFoundException {
 
+		DBConnection con = null;
+		List<SensorEntity> sensors = new ArrayList<>();
+		try {
+			con = getConnection();
+
+			ResultSet rs = con.createSelectQuery("SELECT * FROM " + SensorEntity.TBL_NAME )
+					.getSelectResultSet();
+
+
+			if (rs!=null) {
+				while(rs.next()) {
+					SensorEntity sensor  = new SensorEntity(rs);
+
+					ResultSet rs2 = con.createSelectQuery("SELECT "+SensorLocation.ID+"  FROM " + SensorLocation.TBL_NAME + " WHERE " + SensorLocation.SENSOR_ID_FK + " = :senId")
+							.setParameter("senId", sensor.getId())
+							.getSelectResultSet();
+					boolean noLocationFound = true;
+
+					while(rs2.next()) {
+						noLocationFound = false;
+					}
+
+					if (noLocationFound) {
+						sensors.add(sensor);
+					}
+				}
+			}
+
+		}finally {
+			if (con != null) {
+				con.close();
+			}
+		}
+
+		return sensors;
+	}
+	/**
+	 * only get the sensors that has a location
+	 */
+	public List<SensorEntity> getAllSensorsWithLocation() throws SQLException, ClassNotFoundException {
+
+		DBConnection con = null;
+		List<SensorEntity> sensors = new ArrayList<>();
+		try {
+			con = getConnection();
+
+			ResultSet rs = con.createSelectQuery("SELECT * FROM " + SensorEntity.TBL_NAME )
+					.getSelectResultSet();
+
+
+			if (rs!=null) {
+				while(rs.next()) {
+					SensorEntity sensor  = new SensorEntity(rs);
+
+					ResultSet rs2 = con.createSelectQuery("SELECT *  FROM " + SensorLocation.TBL_NAME + " WHERE " + SensorLocation.SENSOR_ID_FK + " = :senId")
+							.setParameter("senId", sensor.getId())
+							.getSelectResultSet();
+
+
+					while(rs2.next()) {
+						SensorLocation sl = new SensorLocation(rs2);
+						sensor.setSensorLocation(sl);
+						sensors.add(sensor);
+					}
+				}
+			}
+
+		}finally {
+			if (con != null) {
+				con.close();
+			}
+		}
+
+		return sensors;
+	}
 
 	public SensorEntity findSensorById(int id, boolean fetchLocation) throws SQLException, ClassNotFoundException {
 
@@ -315,24 +401,27 @@ public class SensorSql {
 		}
 	}
 
-	//TODO - test delete sensor to see if it update the sql for the location to remove it.
-	public void deleteSensor(SensorEntity sensor) throws ClassNotFoundException, SQLException {
+	public void deleteSensor(SensorEntity sensor, boolean deleteLocation) throws ClassNotFoundException, SQLException {
 		DBConnection con = null;
 		try{
 			con = getConnection();
 
 			String query = "DELETE FROM " + SensorEntity.TBL_NAME + " where " + SensorEntity.ID + " = :id";
 
-			con.createSelectQuery(query)
-			.setParameter("id", sensor.getSensorId())
-			.delete();
+			int deleted = con.createSelectQuery(query)
+					.setParameter("id", sensor.getId())
+					.delete();
 
 			//if there is a sensor location related to the sensor, remove the sensor from it.
-			if (sensor.getSensorLocation() != null) {
+			if (deleteLocation && sensor.getSensorLocation() != null) {
 				SensorLocSql locSql = new SensorLocSql();
-				SensorLocation loc = sensor.getSensorLocation();
-				loc.setSensorIdFk(-1);
-				locSql.updateLocation(loc);
+
+				SensorLocation loc = locSql.findLocationBySensorId(sensor.getId());
+
+				if (loc != null) {
+					loc.setSensorIdFk(-1);
+					locSql.updateLocation(loc);
+				}
 			}
 
 		}finally{
@@ -341,6 +430,7 @@ public class SensorSql {
 			}
 		}
 	}
+
 
 
 	private DBConnection getConnection() throws ClassNotFoundException, SQLException{

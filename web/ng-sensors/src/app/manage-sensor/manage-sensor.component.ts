@@ -21,9 +21,11 @@ export class ManageSensorComponent implements OnInit {
 
   sensorForm: FormGroup;
   submitted: boolean = false;
+
+  loadingLocsList: boolean = false;
   loading: boolean  = false;
 
-  sensor: Sensor;
+  sensor: Sensor = new Sensor();
 
   locList: SensorLoc[] = [];
   powerSaveTime: PsTime[] = [];
@@ -39,7 +41,7 @@ export class ManageSensorComponent implements OnInit {
 
     console.log(window.history.state.action,window.history.state.id );
     
-    this.generateForm(new Sensor());
+    this.generateForm(this.sensor);
 
     //load  from database
     this.sensorService.loadSensorById(this.sensorId.toString()).subscribe(result => {
@@ -53,6 +55,7 @@ export class ManageSensorComponent implements OnInit {
 
       //check if we need to load the sensor location list if no location exist
       if (!data.sensorLocation){
+        this.sensor.sensorLocation = new SensorLoc();
         this.loadSensorLocationList();
       }
     },
@@ -102,6 +105,11 @@ export class ManageSensorComponent implements OnInit {
     //so that the update methode find the right ID to update.
     let locIdValue = parseInt(val.s_location_id);
     this.sensor.sensorLocation = this.locList.find(x => x.id === locIdValue);
+
+    //check if we found a sensor .. if not re-ini
+    if (!this.sensor.sensorLocation){
+      this.sensor.sensorLocation = new SensorLoc();
+    }
     
     console.log("Updated sensor: " , this.sensor);
 
@@ -160,9 +168,9 @@ export class ManageSensorComponent implements OnInit {
       let toUpdLocation = this.sensor.sensorLocation;
       toUpdLocation.sensorIdFk = -1;
       this.sensorService.updateLocation(toUpdLocation).subscribe(result => {
-        this.sensor.sensorLocation = null;
+        this.sensor.sensorLocation = new SensorLoc();
         this.loadSensorLocationList();
-        this.loading = false;
+       
         this.sensorForm.controls.s_location_id.setValue(-1);
       },
       err => {
@@ -177,10 +185,12 @@ export class ManageSensorComponent implements OnInit {
     this.sensorService.loadAllSensorLocation("ALL_LOC_FREE").subscribe(result => {
       console.log("result location", result);
       this.locList = result;
+      this.loading = false;
     }, 
     err =>{
       this.errorMessage = err.error.description + '<br/>' + err.message;
       console.log("error: " , err);
+      this.loading = false;
     })
   }
 

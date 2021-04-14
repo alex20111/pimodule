@@ -78,10 +78,6 @@ public class TemperatureService {
 		WeatherInfo weather = new WeatherInfo();
 		Message msg;
 
-		//		if (key == null || key.length() == 0) {
-		//			key = "qc-59";  //chelsea
-		//		}
-
 
 		//		qc-59 - chelsea
 		try {

@@ -2,7 +2,9 @@
 <div *ngIf="resultMessage" class="alert alert-success" [innerHTML]="resultMessage"></div>
 <div *ngIf="resultError" class="alert alert-danger" [innerHTML]="resultError"></div>
 
-<button class="btn btn-success mb-1 float-right" routerLink="/manageLocation" [state]="{ action: 'add', id: '-1'}"><fa-icon [icon]="faPlusCircle"></fa-icon></button>
+<button class="btn btn-success mb-1 float-right" routerLink="/manageLocation" [state]="{ action: 'add', id: '-1'}" [disabled]="loading">
+    <fa-icon [icon]="faPlusCircle"></fa-icon>
+</button>
 <div class="table-responsive">
     <table class="table">
         <thead>
@@ -24,11 +26,11 @@
                 <td>{{loc.description}}</td>
                 <td>
                     <button class="btn btn-primary ml-1 float-right" routerLink="/manageLocation"
-                        [state]="{ action: 'edit', id: loc.id }">
+                        [state]="{ action: 'edit', id: loc.id }" [disabled]="loading">
                         <fa-icon [icon]="faEdit"></fa-icon>
                     </button>
-                    <button class="btn btn-danger ml-1 float-right" (click)="deleteLocation(loc.id)" >
-                        <fa-icon [icon]="faTrashAlt"></fa-icon></button>
+                    <button class="btn btn-danger ml-1 float-right" (click)="deleteLocation(loc.id)" [disabled]="loading">
+                        <fa-icon [icon]="faTrashAlt" ></fa-icon></button>
                 </td>
             </tr>
         </tbody>

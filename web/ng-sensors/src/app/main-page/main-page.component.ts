@@ -38,6 +38,11 @@ export class MainPageComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {    
 
+		//ALL_SENSORS --> all sensors with location or not.
+		//SENSORS_WITH_LOC --> sensors that only has location attatched to them
+		//SENSORS_WITH_NO_LOC --> all sensors that don't have a location attatched to it.
+
+
     this.loadAllSensors();
 
     this.intervalId = setInterval(() => {
@@ -47,7 +52,7 @@ export class MainPageComponent implements OnInit, OnDestroy {
   }
 
   loadAllSensors(){
-    this.sensorService.loadAllSensors().subscribe(result => {
+    this.sensorService.loadAllSensors("ALL_SENSORS").subscribe(result => {
       console.log("Sersor service result: ", result);
       this.sensorList = result;
     },

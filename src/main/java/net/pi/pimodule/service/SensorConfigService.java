@@ -41,20 +41,35 @@ public class SensorConfigService {
 	//	}
 
 	@Path("sensorList")
-	@GET
+	@POST
 	@Produces(MediaType.APPLICATION_JSON)
-	public Response getSensorList() {
+	@Consumes(MediaType.TEXT_PLAIN)
+	public Response getSensorList(String cmd) {
 		//		logger.debug("getSensorList ");	
+		
+		//ALL_SENSORS --> all sensors with location or not.
+		//SENSORS_WITH_LOC --> sensors that only has location attatched to them
+		//SENSORS_WITH_NO_LOC --> all sensors that don't have a location attatched to it.
 
-		Message msg = new Message("ERROR","getSensorList error");
+		Message msg = new Message("ERROR","getSensorList error: Command: " + cmd);
 		Status status = Status.FORBIDDEN;
 
 		if (sql == null) {
 			sql = new SensorSql();
 		}
+		
+		
 
 		try {
-			List<SensorEntity> sensorList = sql.getAllSensors();
+			List<SensorEntity> sensorList = new ArrayList<>();
+			
+			if ("ALL_SENSORS".equalsIgnoreCase(cmd)) {				
+				sensorList = sql.getAllSensors(true);
+			}else if("SENSORS_WITH_NO_LOC".equalsIgnoreCase(cmd)) {
+				sensorList = sql.getAllSensorsWithNoLocation();
+			}else if("SENSORS_WITH_LOC".equalsIgnoreCase(cmd)) {
+				sensorList = sql.getAllSensorsWithLocation();
+			}
 
 			//			logger.debug("sensorList:  " + sensorList);	
 
@@ -190,7 +205,7 @@ public class SensorConfigService {
 
 					success = new PoolSensor().sendInitCommand(sensor).go();
 
-				}else if (type == SensorType.TEMPERATURE) {		
+				}else if (type == SensorType.TEMP) {		
 
 					success = new TemperatureSensor().sendInitCommand(sensor).go();			
 
@@ -236,6 +251,7 @@ public class SensorConfigService {
 			sql = new SensorSql();
 		}
 
+		sqlLoc = new SensorLocSql();
 
 		try {
 			int sensorId = Integer.parseInt(id);
@@ -246,17 +262,9 @@ public class SensorConfigService {
 				logger.debug("Deleting sensor:  " + sensor);
 				msg = new Message("SUCCESS", "Sensor " + sensor.getSensorType().getType() + sensor.getSensorId() + " deleted");
 
-				sqlLoc = new SensorLocSql();
-				SensorLocation loc = sqlLoc.findLocationBySensorId(sensor.getId());
-
-				if (loc != null) {
-					loc.setSensorIdFk(-1);
-					sqlLoc.updateLocation(loc);
-					logger.debug("deleteSensorById : Sensor location updated. : " + loc.getSensorLocation());
-				}
 
 
-				sql.deleteSensor(sensor);
+				sql.deleteSensor(sensor, true);
 
 				return Response.ok(msg).build();
 			}else {
@@ -264,7 +272,7 @@ public class SensorConfigService {
 				msg = new Message("ERROR","Sensor ID " + id + " not found, cannot delete");
 			}
 
-		} catch (ClassNotFoundException | SQLException e) {
+		} catch (Exception e) {
 			logger.error("Error in deleteSensorById. " , e);
 			status = Status.BAD_REQUEST;
 		}		
@@ -421,22 +429,13 @@ public class SensorConfigService {
 			if (loc  != null) {
 				//just delete..
 				sqlLoc.deleteLocation(loc.getId());
+				msg = new Message("SUCCESS","Sensor deleted");
+				return Response.ok(msg).build();
 			}else {
 				status = Status.BAD_REQUEST;
 				msg = new Message("ERROR","Location ID " + id + " not found, cannot delete");
 			}
 
-			//			if (sensor != null) {
-			//
-			//				logger.debug("Deleting sensor:  " + sensor);
-			//				msg = new Message("SUCCESS", "Sensor " + sensor.getSensorType().getType() + sensor.getSensorId() + " deleted");
-			//				sql.deleteSensor(sensor);
-			//
-			//				return Response.ok(msg).build();
-			//			}else {
-			//				status = Status.BAD_REQUEST;
-			//				msg = new Message("ERROR","Sensor ID " + id + " not found, cannot delete");
-			//			}
 
 		} catch (ClassNotFoundException | SQLException e) {
 			logger.error("Error in deleteSensorById. " , e);

@@ -1,7 +1,7 @@
 package net.pi.pimodule.enums;
 
 public enum SensorType {
-	POOL("p"), TEMPERATURE("t"), GARDEN("g"), LED("a"), NONE("");
+	POOL("p"), TEMP("t"), GARDEN("g"), LED("a"), NONE("");
 	
 	private String type = "";
 	
