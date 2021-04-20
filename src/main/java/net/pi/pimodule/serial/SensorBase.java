@@ -33,12 +33,15 @@ public abstract class SensorBase implements Command{
 
 	private static final Logger logger = LogManager.getLogger(SensorBase.class);
 	protected final static BlockingQueue<Boolean> sensorReplied =  new ArrayBlockingQueue<>(1);
-	
+
 	private String command = "";
 	private boolean waitForReply = true;
 
 	private SensorType type;
 	private String sensorId = "";
+	
+	private Object monitor = new Object();
+
 
 
 	protected void handleStartCommand(SensorData sensorData) throws ClassNotFoundException, SQLException, IllegalStateException, IOException {
@@ -51,7 +54,7 @@ public abstract class SensorBase implements Command{
 			logger.debug("handleStartCommand AA");
 			//generate a new ID and send the information
 			StringBuilder cmd = new StringBuilder(START_MARKER);
-			
+
 			String nextId = new SensorSql().getNextSensorId(sensorData.getSensorTypeEnum());
 			cmd.append(START_CMD + sensorData.getSensorTypeEnum().getType() + tempId + "," + nextId  );
 			cmd.append(END_MARKER);						
@@ -68,7 +71,7 @@ public abstract class SensorBase implements Command{
 			if(sensor == null) { //new sensor add initial default to the DB
 				SensorEntity entity = new SensorEntity();
 				entity.setLastTransmit(new Date());
-//				entity.setLastUpdated(new Date()); // don't need it now since it's not being updated but added.
+				//				entity.setLastUpdated(new Date()); // don't need it now since it's not being updated but added.
 				entity.setSensorId(tempId);
 				entity.setSensorType(sensorData.getSensorTypeEnum());
 				sql.addSensor(entity);
@@ -97,8 +100,8 @@ public abstract class SensorBase implements Command{
 		SensorSql sql = new SensorSql();
 		SensorEntity sensor = sql.findSensor(sensorData.getSensorTypeEnum(), sensorId);
 
-		if (sensor != null && sensor.isConfigured()) {
-			logger.debug("isConfigured, sending init data: " + sensor);
+		if (sensor != null && sensor.isConfigured()  ) {
+			logger.debug("isConfigured, sensor: " + sensor);
 			if(sensorData.getData().contains(OK_REPLY)) {
 				//sensor received the configuration and replied that it was ok
 				sensor.setLastTransmit(new Date());
@@ -120,16 +123,25 @@ public abstract class SensorBase implements Command{
 			sensor.setErrorField("");
 			sql.updateSensor(sensor);
 
+		
 			sensorReplied.offer(true);
-			
-		}else if(sensor != null && !sensor.isConfigured()){
-			//we received a init for the sensor but not configured yet.. update DB and wait 10 min;
-			//this can be the case if a sensor shutdown and the user turn it back on.  
-			logger.debug("Init recieved but sensor not configured: " +sensor);
-			sensor.setLastTransmit(new Date());
-			sensor.setErrorField("WARN: Waiting for initialization");
-			sql.updateSensor(sensor);
-			
+
+		}else if(sensor != null && !sensor.isConfigured() ){
+
+			if (sensor.getLastUpdated() == null) {
+				//we received a init for the sensor but not configured yet.. update DB and wait 10 min;
+				//this can be the case if a sensor shutdown and the user turn it back on.  
+				logger.debug("Init recieved but sensor not configured: " +sensor);
+				sensor.setLastTransmit(new Date());
+				sensor.setErrorField("WARN: Waiting for initialization");
+				sql.updateSensor(sensor);
+			}else if (sensor.getLastUpdated() != null){
+				//sensor sending init Id and waiting for the master to send the configuration
+				String cmd = formatInitString(sensor);
+				logger.debug("sensor not configured but has been registered. sending string command: " + cmd);
+				SerialHandler.getInstance().sendTeensyStringCommand(cmd);
+			}
+
 		}		
 		else if (sensor == null){
 			//problem, //re-ini using START_CMD //TODO
@@ -168,9 +180,9 @@ public abstract class SensorBase implements Command{
 
 		return sb.toString();
 	}
-	
+
 	protected void awaitSensorReply(SensorEntity sensor, SensorSql sql) {
-		
+
 		new Thread(new Runnable() {
 
 			@Override
@@ -192,7 +204,7 @@ public abstract class SensorBase implements Command{
 		}).start();
 
 	}
-	
+
 	public SensorBase sendInitCommand(SensorEntity sensor) {
 		//calculate date in seconds, compensate for eastern time (-4)
 		type = sensor.getSensorType(); // used in command GO
@@ -201,7 +213,7 @@ public abstract class SensorBase implements Command{
 		waitForReply = true;
 		return this;
 	}
-	
+
 	public SensorBase sendOk(SensorEntity sensor) {
 		type = sensor.getSensorType();
 		sensorId = sensor.getSensorId();
@@ -209,14 +221,20 @@ public abstract class SensorBase implements Command{
 		waitForReply = false;
 		return this;
 	}
-	
+
 	public boolean go() {
 		Boolean success = true;
 		try {
 
 			SerialHandler.getInstance().sendTeensyStringCommand(command);
 
+			//emtpy the queue if anything is added
+			
+			
 			if (waitForReply) {
+				if (!sensorReplied.isEmpty()) {
+					sensorReplied.clear();
+				}
 				success = sensorReplied.poll(4000, TimeUnit.MILLISECONDS);
 
 				if (success == null) {

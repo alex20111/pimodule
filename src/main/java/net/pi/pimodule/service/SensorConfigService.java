@@ -139,6 +139,8 @@ public class SensorConfigService {
 				sensor.setPwSaveStart(0);
 				sensor.setPwSaveTransFreq(0);
 			}
+			
+			sensor.setErrorField(""); //reset errors if any
 
 			sql.updateSensor(sensor);
 

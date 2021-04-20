@@ -22,6 +22,7 @@ import { ManageLocationComponent } from './location/manage-location/manage-locat
     TopMenuComponent,
     LocationComponent,
     ManageLocationComponent
+    
   ],
   imports: [
     BrowserModule,
