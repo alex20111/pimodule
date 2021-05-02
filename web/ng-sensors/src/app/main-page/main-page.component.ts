@@ -67,7 +67,7 @@ export class MainPageComponent implements OnInit, OnDestroy {
     let icon = this.faBan;
     if (sensorType === SensorType.POOL) {
       icon = this.faSwimmingPool;
-    } else if (sensorType === SensorType.TEMPERATURE) {
+    } else if (sensorType === SensorType.TEMP) {
       icon = this.faThermometerThreeQuarters;
 
     }

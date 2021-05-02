@@ -104,8 +104,13 @@ export class ManageSensorComponent implements OnInit {
     //since we have the ID we need to re-ini the location with the current saved ID. 
     //so that the update methode find the right ID to update.
     let locIdValue = parseInt(val.s_location_id);
-    this.sensor.sensorLocation = this.locList.find(x => x.id === locIdValue);
+    if (locIdValue !== this.sensor.sensorLocation.id){
+      this.sensor.sensorLocation = this.locList.find(x => x.id === locIdValue);
+    }    
+   
+// console.log("this.locList:", this.locList, locIdValue);
 
+    
     //check if we found a sensor .. if not re-ini
     if (!this.sensor.sensorLocation){
       this.sensor.sensorLocation = new SensorLoc();

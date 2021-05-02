@@ -218,7 +218,7 @@ public class TempSql {
 				temp.setTmpShadeUpdDt(temp.raw().format(AA.getRecordedDate()));
 				temp.setTempShade(AA.getTempC() != null ? temp.tempFormat().format(Double.valueOf(AA.getTempC())) : "-90" );
 			}
-			TempEntity BB = findCurrentTemp(con, TempRecName.BB.name());
+			TempEntity BB = findCurrentTempByLocationName(con, TempRecName.BB.name());
 			if (BB != null) {
 				temp.setTmpSunUpdDt(temp.raw().format(BB.getRecordedDate()));
 				temp.setTempSun(BB.getTempC() != null ? temp.tempFormat().format(Double.valueOf(BB.getTempC())) : "-90" );

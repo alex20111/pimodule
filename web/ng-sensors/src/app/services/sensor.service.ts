@@ -93,7 +93,7 @@ export class Sensor {
 export enum SensorType {
   NONE = "NONE",
   POOL = "POOL",
-  TEMPERATURE = "TEMPERATURE",
+  TEMP = "TEMP",
   GARDEN = "GARDEN",
   LED = "LED"
 }
