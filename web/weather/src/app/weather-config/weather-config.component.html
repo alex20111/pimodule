@@ -1,0 +1,35 @@
+<div class="container-fluid" class="backg">
+    <div class="row">
+        <div class="col-md-12 mt-1">
+            <div class="jumbotron card card-block ml-1  mr-1" style="padding: 10px 8px 10px 08px;  height: 99vh;">
+                <h1 style="color:white">Weather Configuration </h1>
+                <form [formGroup]="configForm" (ngSubmit)="onSubmit()">
+                <div class="col-md-3">
+                    <div class="form-group">
+                        <label>City:</label>
+                        <select formControlName="city" class="form-control">
+                            <option *ngFor="let city of cityList" [ngValue]="city.key">
+                              {{ city.nameEn }}
+                            </option>
+                          </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Refresh time:</label>
+                        <input type="text" class="form-control" formControlName="frm_refresh" />
+                        <div *ngIf="configForm.controls.frm_refresh.errors?.mustBeNumber" class="alert alert-danger">Only numbers are accepted</div>
+                        <div *ngIf="configForm.controls.frm_refresh.errors?.min || 
+                        configForm.controls.frm_refresh.errors?.max" class="alert alert-danger">Number must be between 0 and 60</div>
+                    </div>
+                    <button type="button" class="btn btn-secondary mr-1" (click)="onCancel()">cancel</button>
+                    <button type="submit" [disabled]="submit || configForm.invalid" class="btn btn-primary">Save
+                    
+                     <span *ngIf="submit" class="spinner-border spinner-border-sm mr-1"></span>
+               </button>
+                    
+                </div>
+            </form>
+            </div>
+        </div>
+    </div>
+</div>

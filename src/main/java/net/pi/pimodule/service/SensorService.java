@@ -105,8 +105,10 @@ public class SensorService {
 						ent.setRecordedDate(new Date());
 						ent.setRecorderName(TempRecName.GARAGE.name());
 						ent.setTempC(newData.sensorValue);
+						
+						sql.addTemp(ent);
 
-						sql.saveTemperature(ent);
+//						sql.saveTemperature(ent);
 						return Response.ok("<respOk>").build();
 					}catch (SQLException | ClassNotFoundException e) {
 						logger.error("Sensor  update error. " , e);

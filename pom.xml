@@ -127,7 +127,7 @@
 		</dependency>
 
 	</dependencies>
-	
+
 	<build>
 		<finalName>root</finalName>
 		<plugins>
@@ -137,7 +137,8 @@
 				<version>3.3</version>
 				<configuration>
 					<excludes>
-						<exclude>ngEnclosureInf/**</exclude>
+						<exclude>ng-sensors/**</exclude>
+						<exclude>weather/**</exclude>
 					</excludes>
 				</configuration>
 			</plugin>
@@ -148,6 +149,7 @@
 				<configuration>
 					<excludes>
 						<exclude>ng-sensors/**</exclude>
+						<exclude>weather/**</exclude>
 					</excludes>
 				</configuration>
 			</plugin>
@@ -156,8 +158,10 @@
 				<artifactId>exec-maven-plugin</artifactId>
 				<version>1.6.0</version>
 				<executions>
+				
+				<!-- Sensors website  -->
 				<!-- 	<execution>
-						<id>exec-npm-install</id>
+						<id>exec-npm-install-Sensors</id>
 						<phase>generate-sources</phase>
 						<configuration>
 							<workingDirectory>${project.basedir}/src/main/ngEnclosureInf</workingDirectory>
@@ -170,9 +174,9 @@
 							<goal>exec</goal>
 						</goals>
 					</execution> -->
-					
+
 					<execution>
-						<id>exec-npm-ng-build</id>
+						<id>exec-npm-ng-build-sensor</id>
 						<phase>generate-sources</phase>
 						<configuration>
 							<workingDirectory>${project.basedir}/web/ng-sensors</workingDirectory>
@@ -180,6 +184,38 @@
 							<arguments>
 								<argument>build</argument>
 								<argument>--base-href=/sensors/</argument>
+							</arguments>
+						</configuration>
+						<goals>
+							<goal>exec</goal>
+						</goals>
+					</execution>
+					
+					<!-- weather website  -->
+					
+					<execution>
+						<id>exec-npm-install-Weather</id>
+						<phase>generate-sources</phase>
+						<configuration>
+							<workingDirectory>${project.basedir}/web/weather</workingDirectory>
+							<executable>npm</executable>
+							<arguments>
+								<argument>install</argument>
+							</arguments>
+						</configuration>
+						<goals>
+							<goal>exec</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>exec-npm-ng-build-weather</id>
+						<phase>generate-sources</phase>
+						<configuration>
+							<workingDirectory>${project.basedir}/web/weather</workingDirectory>
+							<executable>ng</executable>
+							<arguments>
+								<argument>build</argument>
+								<argument>--base-href=/weather/</argument>
 							</arguments>
 						</configuration>
 						<goals>

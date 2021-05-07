@@ -1,0 +1,48 @@
+
+
+.noCursor {
+    cursor: none;
+}
+
+.center { 
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    /* width: 30%; */
+  }
+  .bottomright {
+    position: absolute;
+    bottom: 8px;
+    right: 16px;
+  }
+  .bottomleft {
+    position: absolute;
+    bottom: 8px;
+    left: 16px;
+  }
+
+
+
+
+/*
+top padding is 25px
+right padding is 50px
+bottom padding is 75px
+left padding is 100px*/
+/* If the screen size is 601px wide or more, set the font-size of <div> to 80px */
+@media screen and (min-width: 801px) {
+    .text-size {
+      font-size: 8em;
+    }
+  }
+  
+  /* If the screen size is 600px wide or less, set the font-size of <div> to 30px */
+  @media screen and (max-width: 800px) {
+    .text-size {
+      font-size: 6em;
+    }
+  }
+
+
+
+  

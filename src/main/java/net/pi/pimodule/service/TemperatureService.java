@@ -26,7 +26,6 @@ import net.pi.pimodule.service.model.WeatherInfo;
 import net.weather.action.WeatherAction;
 import net.weather.bean.City;
 import net.weather.bean.WeatherCurrentModel;
-import net.weather.bean.WeatherForecastModel;
 import net.weather.bean.WeatherGenericModel;
 import net.weather.enums.WeatherLang;
 
@@ -40,6 +39,8 @@ public class TemperatureService {
 	@GET
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getCurrentTemp() {
+		
+		logger.debug("Get currect temp service");
 
 		Status status = Status.INTERNAL_SERVER_ERROR;
 		//

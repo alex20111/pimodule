@@ -1,0 +1,117 @@
+<div class="container-fluid" class="imageBack">
+	<app-toast></app-toast>
+	<div class="row">
+		<div class="col-md-12 mt-1">
+			<div class="row">
+				<div class="col-md-4" style="padding-right: 10px;">
+					<div class="jumbotron card card-block ml-1 " style=" padding: 10px 8px 10px 08px;height: 47vh;">
+						<div>Sensor 1</div>
+						<div *ngIf="fullWeather?.localtemp.tempSun" style="font-size:12vw;text-align: center;">
+							{{fullWeather.localtemp.tempSun}}</div>
+						<div *ngIf="fullWeather?.localtemp.tmpSunUpdDt" class="bottomleft">
+							{{fullWeather.localtemp.tmpSunUpdDt | date:'HH:mm' }}</div>
+					</div>
+				</div>
+				<div class="col-md-4" style="padding-right: 10px; padding-left: 10px;">
+					<div class="jumbotron card card-block" #middleJumbotron
+						style="color: white;border-color: white; border-width: 2px;padding: 10px 8px 10px 08px; height: 47vh;">
+						<img alt="weather" width="108" height="108" [src]="weatherIcon" class="center rounded-circle" />
+						<div *ngIf="loading()" class="spinner-border spinner-border-sm mr-1"
+							style="  text-align: center;font-size:3vw;"> </div>
+
+						<div *ngIf="fullWeather">
+							<div style=" font-size:2em;  text-align: center;font-size:3vw;"> {{fullWeather.weather}}
+							</div>
+
+							<div *ngIf="fullWeather.UV || fullWeather.humidity" class="row">
+								<div *ngIf="fullWeather.UV" class="col-md-6">
+									<div style="font-size:2vw;"> UV: {{fullWeather.UV}} </div>
+								</div>
+								<div *ngIf="fullWeather.humidity" class="col-md-6">
+									<div style="font-size:2vw;text-align: right"> Humidity: {{fullWeather.humidity}}
+									</div>
+								</div>
+							</div>
+							<div *ngIf="fullWeather.wingChill || fullWeather.humidex" class="row">
+								<div *ngIf="fullWeather.wingChill" class="col-md-6">
+									<div style="font-size:2vw;"> WindChill: {{fullWeather.wingChill}} </div>
+								</div>
+								<div *ngIf="fullWeather.humidex" class="col-md-6">
+									<div style="font-size:2vw;text-align: right"> Humidex: {{fullWeather.humidex}}
+									</div>
+								</div>
+							</div>
+							<div *ngIf="fullWeather.wind" style="text-align: left;font-size:2vw;"> {{fullWeather.wind}}
+							</div>
+							<div *ngIf="fullWeather.temperature" class="bottomleft">
+								{{fullWeather.temperature}}<span>&#176;</span>C</div>
+						</div>
+						<div *ngIf="wthErrors" style="font-size:1.5vw;"> {{wthErrors.message}} </div>
+						<div *ngIf="obsDate" class="bottomright"><small>{{obsDate | date:'medium'}}</small></div>
+					</div>
+				</div>
+				<div class="col-md-4" style="padding-left: 10px; ">
+					<div class="jumbotron card card-block mr-1 "
+						style="color: white;border-color: white; border-width: 2px; padding: 10px 8px 10px 10px;height: 47vh;">
+						<div>Sensor 2</div>
+						<div *ngIf="fullWeather?.localtemp.tempShade" style="font-size:12vw;text-align: center;">
+							{{fullWeather.localtemp.tempShade}}</div>
+						<div *ngIf="fullWeather?.localtemp.tmpShadeUpdDt" class="bottomright">
+							{{fullWeather.localtemp.tmpShadeUpdDt | date:'HH:mm' }}
+							
+						</div>
+
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-md-12 mr-1 ">
+			<div class="jumbotron card card-block ml-1  mr-1"
+				style="padding: 10px 8px 10px 08px;min-height: 200px; height: 50vh;">
+				<div *ngIf="fullWeather">
+
+					<ngb-alert *ngIf="fullWeather.alert" [type]="alertType()" (click)="showAlert()"
+						[dismissible]="false" style="text-align: center">
+						<strong>{{fullWeather.alert.level}}</strong> {{fullWeather.alert.title}}
+					</ngb-alert>
+
+					<span class="float-right">
+						<fa-icon [icon]="faWarehouse" class="mr-2"></fa-icon>{{fullWeather.localtemp.tempMap.GARAGE}}&#x2103;
+						<span *ngIf="fullWeather.localtemp.tempPool"> 
+							<fa-icon [icon]="faSwimming" class="ml-2 mr-1"></fa-icon> {{fullWeather.localtemp.tempPool}}&#x2103;
+						</span>
+				   </span>	
+
+					<div (click)="fullForecast()">
+						<h3>
+							<div> <span style="font-size: 4vw">{{fullWeather.forecast[0].dayOfWeek}}</span> </div>
+
+						</h3>
+						<p style="font-size: 3vw">
+							{{fullWeather.forecast[0].forecast}}
+						</p>
+					</div>
+				</div>
+				<div *ngIf="obsDate" style="font-size: 2vw" class="bottomright">
+					{{ currDate | date:'MMM d, y, HH:mm:ss' }}</div>
+			</div>
+		</div>
+	</div>
+
+</div>
+
+<div class="row ml-1">
+	<div class="col">
+		<div class="float-right" style="background-color: white;">Tada</div>
+		<div ngbDropdown class="d-inline-block ">
+			<button class="btn btn-primary" id="dropdownBasic1" ngbDropdownToggle>Settings</button>
+			<div ngbDropdownMenu aria-labelledby="dropdownBasic1">
+				<button ngbDropdownItem (click)="openFormModal(1)">Weather Config</button>			
+			</div>
+		</div>
+	</div>
+
+
+</div>

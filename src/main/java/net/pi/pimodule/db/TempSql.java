@@ -127,7 +127,7 @@ public class TempSql {
 		if (sensorIdFk > 0) {			
 			ent = currentMaxTemp(con, sensorIdFk);
 		}else {
-			logger.info("findCurrentTempByLocationName::No location found by the name: " + location);
+			logger.info("findCurrentTempByLocationName::No sensor found for location: " + location + " please associate sensor to location");
 		}
 
 		return ent;
@@ -213,7 +213,7 @@ public class TempSql {
 
 			temp = new Temperature();
 
-			TempEntity AA = findCurrentTemp(con, TempRecName.AA.name());
+			TempEntity AA = findCurrentTempByLocationName(con, TempRecName.AA.name());
 			if (AA != null) {
 				temp.setTmpShadeUpdDt(temp.raw().format(AA.getRecordedDate()));
 				temp.setTempShade(AA.getTempC() != null ? temp.tempFormat().format(Double.valueOf(AA.getTempC())) : "-90" );

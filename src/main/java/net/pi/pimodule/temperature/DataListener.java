@@ -176,7 +176,7 @@ public class DataListener implements SerialDataEventListener
 //				temperature.setProperties(temp);
 //				TemperatureHandler th = TemperatureHandler.getInstance();
 //				th.setTemperature(temp);
-				new TempSql().saveTemperature(temp);
+				logger.info("Temp from old sensrot : " + temp );
 				
 			}
 			else

@@ -1,0 +1,20 @@
+<div class="container-fluid" class="backg">
+    <app-toast></app-toast>
+    <div class="row">
+        <div class="col-md-12 mt-1">
+            <table class="ml-3 mr-2">
+                <tr *ngFor="let wth of forecast?.forecast | slice:1" style="height:100px;margin-left: 10px;">
+                    <td style="width:150px;color: white;font-size: 2vw;text-align: center;">
+                        {{wth.dayOfWeek}}
+                    </td>
+                    <td>
+                        <img alt="weather" width="128" height="128" [src]="wth.iconLink" class=" rounded-circle" />
+                  
+                    </td>
+                    <td style="color: white;font-size: 2vw; width: 95%"> {{wth.forecast}}</td>
+                </tr>
+            </table>
+            <!-- <div class="jumbotron card card-block ml-1 " style=" padding: 10px 8px 10px 08px;height: 100px;" > TEXT</div> -->
+        </div>
+    </div>
+</div>
