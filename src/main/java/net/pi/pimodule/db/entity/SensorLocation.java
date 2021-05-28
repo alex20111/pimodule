@@ -1,4 +1,4 @@
-package net.pi.pimodule.db;
+package net.pi.pimodule.db.entity;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;

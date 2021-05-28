@@ -14,8 +14,8 @@ import org.apache.logging.log4j.Logger;
 
 import net.pi.pimodule.common.Constants;
 import net.pi.pimodule.common.SharedData;
-import net.pi.pimodule.db.SensorEntity;
 import net.pi.pimodule.db.SensorSql;
+import net.pi.pimodule.db.entity.SensorEntity;
 import net.pi.pimodule.enums.SensorType;
 import net.pi.pimodule.service.model.Message;
 

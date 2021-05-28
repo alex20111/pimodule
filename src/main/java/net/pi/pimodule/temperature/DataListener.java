@@ -8,9 +8,8 @@ import org.apache.logging.log4j.Logger;
 import com.pi4j.io.serial.SerialDataEvent;
 import com.pi4j.io.serial.SerialDataEventListener;
 
-//import net.pi.pimodule.common.TemperatureHandler;
-import net.pi.pimodule.db.TempEntity;
 import net.pi.pimodule.db.TempSql;
+import net.pi.pimodule.db.entity.TempEntity;
 
 
 /**

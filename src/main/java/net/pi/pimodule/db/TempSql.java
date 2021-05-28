@@ -20,6 +20,9 @@ import home.db.Database;
 import home.db.DbClass;
 import home.db.PkCriteria;
 import net.pi.pimodule.common.Constants;
+import net.pi.pimodule.db.entity.SensorEntity;
+import net.pi.pimodule.db.entity.SensorLocation;
+import net.pi.pimodule.db.entity.TempEntity;
 import net.pi.pimodule.enums.SensorType;
 
 

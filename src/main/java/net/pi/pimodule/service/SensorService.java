@@ -24,8 +24,8 @@ import com.google.gson.JsonSyntaxException;
 
 import home.common.data.Temperature.TempRecName;
 import home.websocket.WebSocketException;
-import net.pi.pimodule.db.TempEntity;
 import net.pi.pimodule.db.TempSql;
+import net.pi.pimodule.db.entity.TempEntity;
 import net.pi.pimodule.serial.Command;
 import net.pi.pimodule.serial.SensorGarageLed;
 import net.pi.pimodule.serial.SerialHandler;

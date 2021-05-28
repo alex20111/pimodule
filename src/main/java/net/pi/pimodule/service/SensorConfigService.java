@@ -18,10 +18,10 @@ import org.apache.logging.log4j.Logger;
 
 import net.pi.pimodule.common.Constants;
 import net.pi.pimodule.common.SharedData;
-import net.pi.pimodule.db.SensorEntity;
 import net.pi.pimodule.db.SensorLocSql;
-import net.pi.pimodule.db.SensorLocation;
 import net.pi.pimodule.db.SensorSql;
+import net.pi.pimodule.db.entity.SensorEntity;
+import net.pi.pimodule.db.entity.SensorLocation;
 import net.pi.pimodule.enums.SensorType;
 import net.pi.pimodule.serial.PoolSensor;
 import net.pi.pimodule.serial.TemperatureSensor;
