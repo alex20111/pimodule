@@ -7,4 +7,12 @@ import { Component } from '@angular/core';
 })
 export class AppComponent {
   title = 'GardenIrrigation';
+
+  menuCollapse: boolean = false;
+
+
+  topMenuCollapse(col: any) { //event coming from the child to the parent to collapse the menu
+    this.menuCollapse = col;
+
+  }
 }

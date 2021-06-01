@@ -1,34 +1,34 @@
 <nav id="sidebar" [ngClass]="menuCollapse ? 'active' : ''">
     <div class="sidebar-header">
-        <h3> <a [routerLink]="'/'" >Home</a></h3>
+        <h3> <a [routerLink]="'/'" >Garden Irrigation</a></h3>
     </div>
 
     <ul class="list-unstyled components">
         <!-- <p>n</p> -->
-        <li>
+        <!-- <li>
 
-            <a href="#" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle"
-                (click)="collapse1.toggle()">Sensors</a> 
+            <a href="#" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle" 
+                (click)="collapse1.toggle()" >   DowpDown</a> 
 
-            <div #collapse1="ngbCollapse" [(ngbCollapse)]="dropDownCollapsed">
-                <div class="card">
+            <div #collapse1="ngbCollapse" [(ngbCollapse)]="dropDownCollapsed" >
+                <div class="card" style="border: 0px">
                     <div class="card-body" style="background: #6d7fcc; ">
-                        <ul class=" list-unstyled">
+                        <ul class=" list-unstyled" >
                             <li>
                                 <a href="#">All</a>
                             </li>
                             <li>
-                                <a href="#">Pool</a>
+                                <a href="#">a</a>
                             </li>
                             <li>
-                                <a href="#">Temperature</a>
+                                <a href="#">Basement</a>
                             </li>
 
                         </ul>
                     </div>
                 </div>
             </div>
-        </li>
+        </li> -->
         <li>
             <a [routerLink]="'/location'">Sensor Location</a>
         </li>

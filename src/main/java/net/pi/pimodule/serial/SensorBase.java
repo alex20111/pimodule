@@ -71,7 +71,6 @@ public abstract class SensorBase implements Command{
 			if(sensor == null) { //new sensor add initial default to the DB
 				SensorEntity entity = new SensorEntity();
 				entity.setLastTransmit(new Date());
-				//				entity.setLastUpdated(new Date()); // don't need it now since it's not being updated but added.
 				entity.setSensorId(tempId);
 				entity.setSensorType(sensorData.getSensorTypeEnum());
 				sql.addSensor(entity);

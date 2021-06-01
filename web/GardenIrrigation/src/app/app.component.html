@@ -1,1 +1,16 @@
+<div class="wrapper">
+    <!-- Sidebar  -->
+    <app-side-menu [menuCollapse]='menuCollapse' ></app-side-menu>
+
+    <!-- Page Content  -->
+    <div id="content" [ngClass]="menuCollapse ? 'active' : ''">
+
+        <app-top-menu (valueChange)='topMenuCollapse($event)' ></app-top-menu>
+
+
+
 <router-outlet></router-outlet>
+
+
+</div>
+</div>
