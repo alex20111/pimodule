@@ -97,6 +97,29 @@ public class SensorSql {
 
 		return sensor;
 	}
+	public List<SensorEntity> getAllSensorsForType(SensorType type) throws SQLException, ClassNotFoundException {
+
+		DBConnection con = null;
+		List<SensorEntity> sensors = new ArrayList<>();
+		try {
+			con = getConnection();
+
+			ResultSet rs = con.createSelectQuery("SELECT * FROM " + SensorEntity.TBL_NAME + " where " + SensorEntity.SENSOR_TYPE + " = :type ")
+					.setParameter("type", type.name())
+					.getSelectResultSet();
+			
+			while(rs.next()) {
+				SensorEntity se = new SensorEntity(rs);
+				sensors.add(se);
+			}
+		}finally {
+			if (con != null) {
+				con.close();
+			}
+		}
+
+		return sensors;
+	}
 	/**
 	 * Get all sensors	
 	 * @param withLocation - also get the location fort he sensor if the sensor has a location
@@ -129,8 +152,8 @@ public class SensorSql {
 							SensorLocation sl = new SensorLocation(rs2);
 							sensor.setSensorLocation(sl);
 						}
-						sensors.add(sensor);
 					}
+					sensors.add(sensor);
 				}
 			}
 
@@ -410,6 +433,7 @@ public class SensorSql {
 
 			String query = "DELETE FROM " + SensorEntity.TBL_NAME + " where " + SensorEntity.ID + " = :id";
 
+			@SuppressWarnings("unused")
 			int deleted = con.createSelectQuery(query)
 					.setParameter("id", sensor.getId())
 					.delete();

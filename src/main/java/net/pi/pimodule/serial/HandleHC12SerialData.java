@@ -42,6 +42,8 @@ public class HandleHC12SerialData implements SerialDataEventListener{
 					new PoolSensor().handleDataReceived(sensorData);
 				}else if (sensorData.getSensorTypeEnum() == SensorType.TEMP){
 					new TemperatureSensor().handleDataReceived(sensorData);
+				}else if (sensorData.getSensorTypeEnum() == SensorType.GARDEN){
+					new GardenSensor().handleDataReceived(sensorData);
 				}
 			}
 

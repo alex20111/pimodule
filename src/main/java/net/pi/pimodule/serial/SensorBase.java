@@ -2,9 +2,7 @@ package net.pi.pimodule.serial;
 
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -12,7 +10,6 @@ import java.util.concurrent.TimeUnit;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import net.pi.pimodule.common.Constants;
 import net.pi.pimodule.common.SharedData;
 import net.pi.pimodule.db.SensorSql;
 import net.pi.pimodule.db.entity.SensorEntity;
@@ -39,10 +36,6 @@ public abstract class SensorBase implements Command{
 
 	private SensorType type;
 	private String sensorId = "";
-	
-	private Object monitor = new Object();
-
-
 
 	protected void handleStartCommand(SensorData sensorData) throws ClassNotFoundException, SQLException, IllegalStateException, IOException {
 
@@ -73,6 +66,12 @@ public abstract class SensorBase implements Command{
 				entity.setLastTransmit(new Date());
 				entity.setSensorId(tempId);
 				entity.setSensorType(sensorData.getSensorTypeEnum());
+				
+				if(entity.getSensorType() == SensorType.GARDEN) { //garden sensor is automatically configured when called.
+					entity.setLastUpdated(new Date());
+					entity.setConfigured(true);
+				}
+				
 				sql.addSensor(entity);
 
 			}else {
@@ -106,10 +105,15 @@ public abstract class SensorBase implements Command{
 				sensor.setLastTransmit(new Date());
 				sensor.setErrorField("");
 				sql.updateSensor(sensor);
-			}else {
+			}else if (sensor.getSensorType() == SensorType.POOL || sensor.getSensorType() == SensorType.TEMP) {
 				//sensor sending init Id and waiting for the master to send the configuration
 				String cmd = formatInitString(sensor);
-				logger.debug("Sending string command: " + cmd);
+				logger.debug("Sending formatInitString  command: " + cmd);
+				SerialHandler.getInstance().sendTeensyStringCommand(cmd);
+			}else if (sensor.getSensorType() == SensorType.GARDEN) {
+				//send answer
+				String cmd = formatSimpleInit(sensor);
+				logger.debug("Sending formatSimpleInit  command: " + cmd);
 				SerialHandler.getInstance().sendTeensyStringCommand(cmd);
 			}
 		}else if(sensor != null && !sensor.isConfigured() && sensorData.getData().contains(OK_REPLY)){ //sent when new sensor is added and then user manually configure it.
@@ -122,7 +126,7 @@ public abstract class SensorBase implements Command{
 			sensor.setErrorField("");
 			sql.updateSensor(sensor);
 
-		
+
 			sensorReplied.offer(true);
 
 		}else if(sensor != null && !sensor.isConfigured() ){
@@ -135,10 +139,17 @@ public abstract class SensorBase implements Command{
 				sensor.setErrorField("WARN: Waiting for initialization");
 				sql.updateSensor(sensor);
 			}else if (sensor.getLastUpdated() != null){
-				//sensor sending init Id and waiting for the master to send the configuration
-				String cmd = formatInitString(sensor);
-				logger.debug("sensor not configured but has been registered. sending string command: " + cmd);
-				SerialHandler.getInstance().sendTeensyStringCommand(cmd);
+				if (sensor.getSensorType() == SensorType.POOL || sensor.getSensorType() == SensorType.TEMP) {
+					//sensor sending init Id and waiting for the master to send the configuration
+					String cmd = formatInitString(sensor);
+					logger.debug("sensor not configured but has been registered. sending --formatInitString-- command: " + cmd);
+					SerialHandler.getInstance().sendTeensyStringCommand(cmd);
+				}else if(sensor.getSensorType() == SensorType.GARDEN) {
+					//sensor sending init Id and waiting for the master to send the configuration
+					String cmd = formatSimpleInit(sensor);
+					logger.debug("sensor not configured but has been registered. sending --formatSimpleInit-- command: " + cmd);
+					SerialHandler.getInstance().sendTeensyStringCommand(cmd);
+				}
 			}
 
 		}		
@@ -151,15 +162,20 @@ public abstract class SensorBase implements Command{
 
 	}
 
+
 	protected String getDateInSeconds() {
 		int compensate = 1000*60*60*4;		
 		long dateInSec = ( new Date().getTime() - (compensate) ) / 1000 ;
 		return  String.valueOf(dateInSec);
 	}
 
-	protected String formatInitString(SensorEntity sensor) {
-
-		//<ip091,1616162330,65,11,4,3600> 
+	/**
+	 * Send init string to sensor with clock. Usually sensor on batteries that send data (Temp sensor/Pool sensor)
+	 * Example: <ip091,1616162330,65,11,4,3600> 
+	 * @param sensor
+	 * @return
+	 */
+	protected String formatInitString(SensorEntity sensor) {		
 
 		StringBuilder sb = new StringBuilder(START_MARKER);
 		sb.append(INIT_CMD);
@@ -177,6 +193,15 @@ public abstract class SensorBase implements Command{
 		sb.append(sensor.getPwSaveTransFreq());
 		sb.append(END_MARKER);
 
+		return sb.toString();
+	}
+
+	protected String formatSimpleInit(SensorEntity sensor) {
+		StringBuilder sb = new StringBuilder(START_MARKER);
+		sb.append(INIT_CMD);
+		sb.append(sensor.getSensorType().getType());
+		sb.append(sensor.getSensorId());
+		sb.append(END_MARKER);
 		return sb.toString();
 	}
 
@@ -228,8 +253,8 @@ public abstract class SensorBase implements Command{
 			SerialHandler.getInstance().sendTeensyStringCommand(command);
 
 			//emtpy the queue if anything is added
-			
-			
+
+
 			if (waitForReply) {
 				if (!sensorReplied.isEmpty()) {
 					sensorReplied.clear();

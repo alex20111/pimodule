@@ -23,13 +23,14 @@ import net.pi.pimodule.service.model.Message;
  *
  */
 
-public class PoolSensor extends SensorBase {
+public class GardenSensor extends SensorBase {
 
-	private static final Logger logger = LogManager.getLogger(PoolSensor.class);
+	private static final Logger logger = LogManager.getLogger(GardenSensor.class);
 
 
 	/**
-	 * Command to send 	 */
+	 * Command to send
+	 */
 	@Override
 	public String sendCommand() {
 
@@ -45,43 +46,28 @@ public class PoolSensor extends SensorBase {
 			if (sensorData.getCommand().equals(START_CMD)) { //Sensor has no ID and we need to provide one.
 				super.handleStartCommand(sensorData);
 
-			}else if(sensorData.getCommand().equals(INIT_CMD)) {
-				//send init data to sensor
+			}else if(sensorData.getCommand().equals(INIT_CMD)) { //different from base				
+				//				//send init data to sensor
 				super.handleInitCommand(sensorData);
-			}else if(sensorData.getCommand().startsWith(DATA_CMD)) {
-				logger.debug("Data recieved from sensor: " + sensorData);
-				//save data to database.. also save last transmit time.. last update time is when you update it manually. 
-				SensorSql sql = new SensorSql();
-				SensorEntity ent = sql.findSensor(sensorData.getSensorTypeEnum(), sensorData.getSensorId());
 
-				if (ent != null) {
+			}else if (sensorData.getCommand().startsWith(SEND_CMD)) {
+				logger.debug("Send command recieved ");
+				if (sensorData.getCommand().contains(OK_REPLY)) {
+					SensorSql sql = new SensorSql();
+					SensorEntity ent = sql.findSensor(sensorData.getSensorTypeEnum(), sensorData.getSensorId());
 
-					//update temp
-					TempSql tempSql= new TempSql();				
+					if (ent != null) {
 
-					TempEntity temp = getTemperatureData(sensorData);
-					if (temp != null) {
-						logger.debug("formatting and adding pool temperature data: " + temp);
-						tempSql.addTemp(temp);	
-					}
-
-					ent.setErrorField("");
-
-					if (!ent.isConfigured()) {
-						logger.debug("Updating sensor information" );
-						awaitSensorReply(ent, sql);
-
-					}else {
 						ent.setLastTransmit(new Date());
-						ent.setBattLvl(temp.getBatteryLevel());
-						sendOk(ent).go();
-						sql.updateSensor(ent);
-					}				
-				}else {
-					Message msg = new Message(Constants.WARNING + " - ", "Sensor " + sensorData.getSensorTypeEnum().getType() + sensorData.getSensorId() + " not registered on the DB. Reset ");
-					SharedData.getInstance().addToMessage(msg);
+						sql.updateLastTransmit(ent.getId(), new Date(), true);
+					}else {
+						logger.error("No sensor found: " + sensorData);
+						Message msg = new Message(Constants.WARNING + " - ", "Sensor " + sensorData.getSensorTypeEnum().getType() + sensorData.getSensorId() + " not registered on the DB. Reset ");
+						SharedData.getInstance().addToMessage(msg);
+					}
 				}
 			}
+
 		}catch(Exception ex) {
 			logger.error("Error in handleDataReceived" , ex);
 		}
@@ -89,7 +75,7 @@ public class PoolSensor extends SensorBase {
 
 		return null;
 	}
-	
+
 
 
 	private TempEntity getTemperatureData(SensorData sensorData) {
@@ -102,11 +88,11 @@ public class PoolSensor extends SensorBase {
 
 		if (dataSplit.length > 1) {
 			temp = new TempEntity();
-			
+
 			String battStr = dataSplit[2];
 			float fmtBatt = 0f;
 			if (battStr.length() > 0) {
-				
+
 				int battLen = battStr.length();
 				if (battLen == 4) {
 					fmtBatt = Float.valueOf(battStr) / 1000;
@@ -118,7 +104,7 @@ public class PoolSensor extends SensorBase {
 					fmtBatt = Float.valueOf(battStr);
 				}
 			}
-			
+
 			temp.setBatteryLevel(String.valueOf(fmtBatt));
 			temp.setHumidity("");
 			temp.setRecordedDate(new Date());
