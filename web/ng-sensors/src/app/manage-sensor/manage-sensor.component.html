@@ -15,7 +15,7 @@
                     <div *ngIf="frm.s_trans_freq.errors?.required">Please provide a valid transmit frequency.</div>
                     <div *ngIf="frm.s_trans_freq.errors?.pattern">Needs numeric value</div>
                     <div *ngIf="frm.s_trans_freq.errors?.min">Needs to be greater than 0</div>
-                    <div *ngIf="frm.s_trans_freq.errors?.min">Cannot be greater than 120</div>
+                    <div *ngIf="frm.s_trans_freq.errors?.max">Cannot be greater than 120</div>
                 </div>
             </div>
 

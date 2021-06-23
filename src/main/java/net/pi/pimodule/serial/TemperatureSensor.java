@@ -75,7 +75,7 @@ public class TemperatureSensor extends SensorBase {
 					}else {
 						ent.setLastTransmit(new Date());
 						ent.setBattLvl(temp.getBatteryLevel());
-						sendOk(ent).go();
+						sendOk(ent).go(false);
 						sql.updateSensor(ent);
 					}				
 				}else {

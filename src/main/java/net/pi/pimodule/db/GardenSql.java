@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,6 +29,9 @@ public class GardenSql {
 		boolean exist = false;
 		try {
 			con = getConnection();
+			
+//			con.createSelectQuery("DROP TABLE " +GardenWorkerEntity.TBL_NAME );
+//			con.executeUpdate();
 
 			DatabaseMetaData md = con.getConnection().getMetaData();
 			ResultSet rs = md.getTables(null, null, GardenWorkerEntity.TBL_NAME.toUpperCase(), null);
@@ -44,9 +46,10 @@ public class GardenSql {
 				logger.info("SensorSql does not exist , creating");
 				List<ColumnType> columns = new ArrayList<ColumnType>();					
 				columns.add(new ColumnType(GardenWorkerEntity.ID, true).INT().setPKCriteria(new PkCriteria().autoIncrement()));
+				columns.add(new ColumnType(GardenWorkerEntity.NAME).VarChar(50));
 				columns.add(new ColumnType(GardenWorkerEntity.SCHED_TYPE).VarChar(25));
-				columns.add(new ColumnType(GardenWorkerEntity.WATERING_DATE).TimeStamp());
-				columns.add(new ColumnType(GardenWorkerEntity.SENSOR_ID).INT());
+				columns.add(new ColumnType(GardenWorkerEntity.WATERING_DATE).VarChar(20));
+				columns.add(new ColumnType(GardenWorkerEntity.SENSOR_ID_FK).INT());
 				columns.add(new ColumnType(GardenWorkerEntity.WATERING_DURATION).INT());
 				columns.add(new ColumnType(GardenWorkerEntity.DESCRIPTION).VarChar(2000));
 
@@ -68,6 +71,32 @@ public class GardenSql {
 
 			ResultSet rs = con.createSelectQuery("SELECT * FROM " + GardenWorkerEntity.TBL_NAME + " WHERE " +GardenWorkerEntity.ID + " = :workerId" )
 					.setParameter("workerId", workerId)
+					.getSelectResultSet();
+
+
+			if (rs!=null) {
+				while(rs.next()) {
+					worker  = new GardenWorkerEntity(rs);
+				}
+			}
+
+		}finally {
+			if (con != null) {
+				con.close();
+			}
+		}
+
+		return worker;
+	}
+	public GardenWorkerEntity findWorkerBySensorId(int sensorId ) throws SQLException, ClassNotFoundException {
+
+		DBConnection con = null;
+		GardenWorkerEntity worker = null;
+		try {
+			con = getConnection();
+
+			ResultSet rs = con.createSelectQuery("SELECT * FROM " + GardenWorkerEntity.TBL_NAME + " WHERE " +GardenWorkerEntity.SENSOR_ID_FK + " = :sensorIdFk" )
+					.setParameter("sensorIdFk", sensorId)
 					.getSelectResultSet();
 
 
@@ -120,7 +149,7 @@ public class GardenSql {
 			con = getConnection();
 
 			ResultSet rs = con.createSelectQuery("SELECT * FROM " + SensorEntity.TBL_NAME + " WHERE " + SensorEntity.SENSOR_TYPE + " =:sensorType "
-					+ "AND " + SensorEntity.ID + " not IN (select " + GardenWorkerEntity.SENSOR_ID + " FROM " + GardenWorkerEntity.TBL_NAME )
+					+ "AND " + SensorEntity.ID + " NOT IN (select " + GardenWorkerEntity.SENSOR_ID_FK + " FROM " + GardenWorkerEntity.TBL_NAME + " ) " )
 					.setParameter("sensorType", SensorType.GARDEN.name())
 					.getSelectResultSet();
 
@@ -147,10 +176,11 @@ public class GardenSql {
 			con = getConnection();
 
 			pk = con.buildAddQuery(GardenWorkerEntity.TBL_NAME)
+					.setParameter(GardenWorkerEntity.NAME, worker.getName())
 					.setParameter(GardenWorkerEntity.DESCRIPTION, worker.getDescription())
 					.setParameter(GardenWorkerEntity.SCHED_TYPE, worker.getScheduleType().name())
-					.setParameter(GardenWorkerEntity.SENSOR_ID, worker.getSensorId())
-					.setParameter(GardenWorkerEntity.WATERING_DATE, (worker.getWateringDate() != null ? Timestamp.valueOf(worker.getWateringDate()) : null) )
+					.setParameter(GardenWorkerEntity.SENSOR_ID_FK, worker.getSensorIdFk())
+					.setParameter(GardenWorkerEntity.WATERING_DATE, worker.getWateringDate()  )
 					.setParameter(GardenWorkerEntity.WATERING_DURATION, worker.getWateringDuration())
 					.add();
 
@@ -174,15 +204,33 @@ public class GardenSql {
 		try {
 			con = getConnection();
 			con.buildUpdateQuery(GardenWorkerEntity.TBL_NAME)
+			.setParameter(GardenWorkerEntity.NAME, worker.getName())
 			.setParameter(GardenWorkerEntity.DESCRIPTION, worker.getDescription())
 			.setParameter(GardenWorkerEntity.SCHED_TYPE, worker.getScheduleType().name())
-			.setParameter(GardenWorkerEntity.SENSOR_ID, worker.getSensorId())
-			.setParameter(GardenWorkerEntity.WATERING_DATE, (worker.getWateringDate() != null ? Timestamp.valueOf(worker.getWateringDate()) : null) )
+			.setParameter(GardenWorkerEntity.SENSOR_ID_FK, worker.getSensorIdFk())
+			.setParameter(GardenWorkerEntity.WATERING_DATE, worker.getWateringDate()  )
 			.setParameter(GardenWorkerEntity.WATERING_DURATION, worker.getWateringDuration())
 			.addUpdWhereClause("Where "+GardenWorkerEntity.ID+" = :idValue", worker.getId()).update();
 
 		}finally {
 			if (con != null) {
+				con.close();
+			}
+		}
+	}
+	public void deleteWorker(int workerId) throws ClassNotFoundException, SQLException {
+		DBConnection con = null;
+		try{
+			con = getConnection();
+
+			String query = "DELETE FROM " + GardenWorkerEntity.TBL_NAME + " where " + GardenWorkerEntity.ID + " = :id";
+
+			con.createSelectQuery(query)
+			.setParameter("id", workerId)
+			.delete();
+
+		}finally{
+			if (con!=null){
 				con.close();
 			}
 		}

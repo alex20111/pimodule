@@ -205,11 +205,11 @@ public class SensorConfigService {
 				boolean success = false;
 				if (type == SensorType.POOL) {		
 
-					success = new PoolSensor().sendInitCommand(sensor).go();
+					success = new PoolSensor().sendInitCommand(sensor).go(true);
 
 				}else if (type == SensorType.TEMP) {		
 
-					success = new TemperatureSensor().sendInitCommand(sensor).go();			
+					success = new TemperatureSensor().sendInitCommand(sensor).go(true);			
 
 				}
 

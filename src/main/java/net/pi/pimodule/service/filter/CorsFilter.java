@@ -7,15 +7,10 @@ import javax.ws.rs.container.ContainerResponseContext;
 import javax.ws.rs.container.ContainerResponseFilter;
 import javax.ws.rs.ext.Provider;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
-import net.pi.pimodule.serial.PoolSensor;
 
 @Provider
 public class CorsFilter implements ContainerResponseFilter {
 
-	private static final Logger logger = LogManager.getLogger(CorsFilter.class);
 	
     @Override
     public void filter(ContainerRequestContext requestContext, 

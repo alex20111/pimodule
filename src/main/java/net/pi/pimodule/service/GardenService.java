@@ -3,8 +3,11 @@ package net.pi.pimodule.service;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
 
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.InternalServerErrorException;
 import javax.ws.rs.NotFoundException;
@@ -19,10 +22,14 @@ import javax.ws.rs.core.Response;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import javassist.tools.rmi.ObjectNotFoundException;
+import net.pi.pimodule.common.Constants;
+import net.pi.pimodule.common.SharedData;
+import net.pi.pimodule.common.WorkerStatus;
 import net.pi.pimodule.db.GardenSql;
-import net.pi.pimodule.db.SensorSql;
 import net.pi.pimodule.db.entity.GardenWorkerEntity;
 import net.pi.pimodule.db.entity.SensorEntity;
+import net.pi.pimodule.serial.GardenSensor;
 
 @Path("garden")
 public class GardenService {
@@ -39,15 +46,22 @@ public class GardenService {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getAllGardenWorkers() {
 
-		List<GardenWorkerEntity> workers;
+		logger.debug("getAllGardenWorkers()");
+
+		List<GardenWorkerEntity> workers = new ArrayList<>();
 		try {
 			workers = sql.getAllWorkers();
-		} catch (ClassNotFoundException | SQLException e) {
-			logger.error("Error in getAllGardenWorkers", e);
 
+			@SuppressWarnings("unchecked")
+			Map<Integer, WorkerStatus> status = (Map<Integer, WorkerStatus>)SharedData.getInstance().getSharedObject(Constants.WORKERS_STATUS);
+
+			workers.stream().forEach(w -> w.setStatus(status.get(w.getId())));
+
+			logger.debug("workers: " + workers);
+		} catch (Exception e) {
+			logger.error("Error in getAllGardenWorkers", e);
 			throw new InternalServerErrorException("Error getting getAllGardenWorkers ");
 		}
-
 
 		return Response.ok(workers).build();
 	}
@@ -79,14 +93,27 @@ public class GardenService {
 	@Produces(MediaType.APPLICATION_JSON)
 	public Response getWorkerById(@PathParam("id")  Integer id) {
 
+		logger.debug("Get worker by id: " + id);
+
 		GardenWorkerEntity worker;
 		try {
 
 			if (id != null) {
 
 				worker = sql.findWorkerById(id);
+
+				if (worker == null) {
+					throw new NotFoundException("Resource not found");
+				}else {
+					@SuppressWarnings("unchecked")
+					Map<Integer, WorkerStatus> status = (Map<Integer, WorkerStatus>)SharedData.getInstance().getSharedObject(Constants.WORKERS_STATUS);
+					worker.setStatus(status.get(worker.getId()));
+				}
+
+				logger.debug("worker" + worker);
+
 			}else {
-				throw new NotFoundException("Cannot found");
+				throw new NotFoundException("ID not provided");
 			}
 		} catch (ClassNotFoundException | SQLException e) {
 			logger.error("Error in getWorkerById", e);
@@ -98,37 +125,176 @@ public class GardenService {
 		return Response.ok(worker).build();
 	}
 
+	@GET
+	@Path("{id: \\d+}/turnOn")
+	@Produces(MediaType.TEXT_PLAIN)
+	public String turnOn(@PathParam("id")  Integer id) {
+		logger.debug("Turning on water: " + id);
+
+		GardenWorkerEntity worker = null;
+		try {
+
+			if (id != null) {
+
+				worker = sql.findWorkerById(id);
+
+				if (worker != null) {
+					@SuppressWarnings("unchecked")
+					Map<Integer, WorkerStatus> status = (Map<Integer, WorkerStatus>)SharedData.getInstance().getSharedObject(Constants.WORKERS_STATUS);
+
+					try {
+						logger.debug("Worker status befoore: " + status.get(worker.getId()));
+
+						boolean success = new GardenSensor(worker).turnOnWater();
+
+						if (success) {
+							logger.debug("Worker status after: " + status.get(worker.getId()));
+							return "TURN_ON_SUCCESS";
+						}
+
+					}catch(NoSuchElementException | ObjectNotFoundException e) {
+						logger.info("problem turning on the water: " + e.getMessage());
+						throw new NotFoundException("error turning on the water");
+					}
+
+				}else {
+					throw new NotFoundException("Resource not found");
+				}
+
+			}else {
+				throw new NotFoundException("ID not provided");
+			}
+		} catch (ClassNotFoundException | SQLException e) {
+			logger.error("Error in getWorkerById", e);
+
+			throw new InternalServerErrorException("Error getting getWorkerById ");
+		}
+		return "TURN_ON_ERROR";
+
+	}
+	@GET
+	@Path("{id: \\d+}/turnOff")
+	@Produces(MediaType.TEXT_PLAIN)
+	public String turnOff(@PathParam("id")  Integer id) { ////////////////change to string!!!!!!!!!!!!!!!!!! return
+		logger.debug("Turning off water: " + id);
+
+		GardenWorkerEntity worker = null;
+		try {
+
+			if (id != null) {
+
+				worker = sql.findWorkerById(id);
+
+				if (worker != null) {
+					@SuppressWarnings("unchecked")
+					Map<Integer, WorkerStatus> status = (Map<Integer, WorkerStatus>)SharedData.getInstance().getSharedObject(Constants.WORKERS_STATUS);
+
+					try {
+						logger.debug("Worker status befoore: " + status.get(worker.getId()));
+
+						boolean success = new GardenSensor(worker).turnOffWater();
+
+						if (success) {
+							logger.debug("Worker status after: " + status.get(worker.getId()));
+							return "TURN_OFF_SUCCESS";
+						}					
+
+					}catch(NoSuchElementException | ObjectNotFoundException e) {
+						logger.info("problem turning on the water: " + e.getMessage());
+						throw new NotFoundException("error turning on the water");
+					}
+
+				}else {
+					throw new NotFoundException("Resource not found");
+				}
+
+			}else {
+				throw new NotFoundException("ID not provided");
+			}
+		} catch (ClassNotFoundException | SQLException e) {
+			logger.error("Error in getWorkerById", e);
+
+			throw new InternalServerErrorException("Error getting getWorkerById ");
+		}
+		return "TURN_OFF_ERROR";
+	}
+
 	@POST  // = create
 	@Consumes(MediaType.APPLICATION_JSON)
-	public void createWorker() {
+	public void createWorker(GardenWorkerEntity worker) {
+		logger.debug("Create worker : " + worker);
 
+		if (worker != null) {
+			try {
+				//TODO verify if exist 1st with the sensorid FK
+				
+				
+				int pk = sql.addWorker(worker);
+				
+				worker.setId(pk);
+				
+				//get worker status after
+				boolean success = new GardenSensor(worker).turnOffWater();
+
+				if (!success) {
+					logger.error("Could not contact the worker: " + worker);
+				}			
+				
+			} catch (ClassNotFoundException | SQLException | NoSuchElementException | ObjectNotFoundException e) {
+				logger.error("Error while adding worker", e);
+				throw new InternalServerErrorException("Error while adding worker");
+			}
+		}else {
+			throw new NotFoundException("No worker provided");
+		}
 	}
 
 	@PUT // = update
 	@Consumes(MediaType.APPLICATION_JSON)
-	public void updateWorker() {
+	public void updateWorker(GardenWorkerEntity worker) {
+		logger.debug("update worker : " + worker);
 
-	}
-	@GET
-	@Path("{id: \\d+}/deleteSensor")
-	@Produces(MediaType.APPLICATION_JSON)
-	public void del(@PathParam("id")  Integer id) {
-
-		SensorSql sql = new SensorSql();
-		try {
-			logger.debug("Delting: " + id);
-
-			SensorEntity sensor = sql.findSensorById(id, false);
-
-			if (sensor != null) {
-
-				sql.deleteSensor(sensor, false);
+		if (worker != null) {
+			try {
+				 sql.updateWorker(worker);
+			
+//				//get worker status after
+//				boolean success = new GardenSensor(worker).turnOffWater();
+//
+//				if (!success) {
+//					logger.error("Could not contact the worker: " + worker);
+//				}			
+				
+			} catch (ClassNotFoundException | SQLException e) {
+				logger.error("Error while updating worker", e);
+				throw new InternalServerErrorException("Error while updating worker");
 			}
-		}catch(Exception e) {
-			logger.error(e);
+		}else {
+			throw new NotFoundException("No worker provided");
 		}
 
 	}
+	@DELETE
+	@Path("{id: \\d+}")
+	public void del(@PathParam("id")  Integer id) {
+		logger.debug("Deleting worker: " + id);
+
+
+		if (id != null) {
+
+			try {
+				sql.deleteWorker(id);
+			} catch (ClassNotFoundException | SQLException e) {
+				logger.error("Error while deleting worker", e);
+				throw new InternalServerErrorException("Error while deleting worker");
+			}
+
+		}else {
+			throw new NotFoundException("No worker id provided to delete");
+		}
+
+	}
+
 
 }
 

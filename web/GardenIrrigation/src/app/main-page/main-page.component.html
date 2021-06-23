@@ -1,16 +1,34 @@
 
 <div class="row">
-  <div class="col-lg-4 col-md-6">
-    <div class="card  ">
-      <div class="card-header bg-success ">Name </div>
+  <div class="col-lg-2 col-md-4">
+    <div *ngFor="let worker of allWorkers" class="card  " >     
+      <div class="card-header bg-success ">{{worker.name}} </div>
+
       <div class="card-body">
-        <h5 class="card-title">Secondary card title</h5>
-        <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's
-          content.</p>
+   
+        <img class="card-img" *ngIf="worker.status.watering && !worker.status.doNotWater" src="assets/watering-can.png"  />
+        <img class="card-img" *ngIf="!worker.status.watering && !worker.status.doNotWater" src="assets/gardensun.png"  />
+        <img class="card-img" *ngIf="worker.status.doNotWater" src="assets/gardensun.png"  />
+
+        <p class="card-text mt-2" *ngIf="worker.status.watering && !worker.status.doNotWater">00:23 Remaining: </p>
+        <p class="card-text mt-2" *ngIf="!worker.status.watering && !worker.status.doNotWater">
+            Sechedule for 
+            {{worker.wateringDate | date:'fullDate'}}
+            ( {{worker.wateringDuration}} min)   
+          </p>
+      </div>
+      <div class="card-footer">
+       <button [disabled]="submitWaterLoading"  class="btn " [ngClass]="{ 'btn-danger': worker.status.watering, 'btn-success' : !worker.status.watering}" (click)="water(worker.id)">
+        <span *ngIf="submitWaterLoading" class="spinner-border spinner-border-sm mr-1"></span>
+         <fa-icon *ngIf="!submitWaterLoading" [icon]="faPowerOff" ></fa-icon> 
+         </button>
       </div>
     </div>
+    <span *ngIf="loadingAllWorkers"  class="spinner-border spinner-border-lg"></span>
   </div>
 </div>
+
+
 
 <!-- <div class="card mb-12" >
     <div class="row g-0">

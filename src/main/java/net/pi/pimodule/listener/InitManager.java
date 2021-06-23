@@ -1,8 +1,6 @@
 package net.pi.pimodule.listener;
 
 
-import java.io.IOException;
-import java.sql.SQLException;
 
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
@@ -42,8 +40,10 @@ public class InitManager implements ServletContextListener    {
 				tm.startTemperature(sampleRate);
 				
 				SerialHandler sh = SerialHandler.getInstance();
-				sh.startCeiscoSerial();
+//				sh.startCeiscoSerial();
 				sh.startTeensySerial();
+				tm.pingGardenWorkersForStatus();
+				tm.startGardenIrrigation();
 				
 			}else {
 				logger.info("RUNNING IN DEV MODE");
@@ -51,6 +51,12 @@ public class InitManager implements ServletContextListener    {
 			
 			
 			tm.startCleanUpThread();
+			
+			
+			
+			//TODO to remove when the thead is working for the garden
+//			getWorkersStatus();
+			
 		}catch(Exception ex) {
 			ex.printStackTrace();			
 		}
@@ -64,5 +70,7 @@ public class InitManager implements ServletContextListener    {
 		// TODO Auto-generated method stub
 
 	}
+	
+	
 
 }

@@ -26,6 +26,9 @@
             </ul>
         </div>
 
+        <button type="button" class="btn btn-success float-right" *ngIf="newSensors.length > 0" routerLink="/manage">
+            add worker <span class="badge badge-light">{{newSensors.length}}</span>
+          </button>
 
     </div>
 </nav>

@@ -1,0 +1,39 @@
+<div *ngIf="resultMessage" class="alert alert-success" [innerHTML]="resultMessage"></div>
+<div *ngIf="resultError" class="alert alert-danger" [innerHTML]="resultError"></div>
+
+<div class="table-responsive">
+    <table class="table">
+        <thead>
+            <tr>
+                <th scope="col">#</th>
+                <th scope="col">Name</th>
+                <th scope="col" style="text-align: center;">Schedule Type</th>
+                <th scope="col" style="text-align: center;">Next watering</th>
+                <th scope="col" style="text-align: center;">Duration</th>
+                <th scope="col" style="text-align: center;">Description</th>
+                <th scope="col">Worker sensor id</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr *ngFor="let worker of workerList; index as i">
+
+                <td scope="row">{{i}}</td>
+                <td>{{worker.name}}</td>
+                <td style="text-align: center;">{{sched(worker.scheduleType)}}</td>
+                <td style="text-align: center;">{{worker.wateringDate}}</td>
+                <td style="text-align: center;">{{worker.wateringDuration}}</td>
+                <td style="text-align: center;">{{worker.description}}</td>
+                <td>{{worker.sensorIdFk}}</td>
+                <td>                      
+                            
+                    <button class="btn btn-primary ml-1" routerLink="/manage"
+                        [state]="{ action: 'edit', id: worker.id }">
+                        <fa-icon [icon]="faEdit"></fa-icon></button>
+                        <button class="btn btn-danger ml-1" (click)="deleteWorker(worker.id)" >
+                            <fa-icon [icon]="faTrashAlt"></fa-icon></button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>

@@ -32,8 +32,6 @@ public abstract class SensorBase implements Command{
 	protected final static BlockingQueue<Boolean> sensorReplied =  new ArrayBlockingQueue<>(1);
 
 	private String command = "";
-	private boolean waitForReply = true;
-
 	private SensorType type;
 	private String sensorId = "";
 
@@ -212,7 +210,7 @@ public abstract class SensorBase implements Command{
 			@Override
 			public void run() {
 				//send new update
-				boolean reInitSuccess = sendInitCommand(sensor).go();
+				boolean reInitSuccess = sendInitCommand(sensor).go(true);
 				//if we have a success, the DB will already be updated..
 				if (!reInitSuccess) {
 					sensor.setErrorField("ERROR: no reply when trying to re-init the sensor. Re-try");
@@ -234,7 +232,7 @@ public abstract class SensorBase implements Command{
 		type = sensor.getSensorType(); // used in command GO
 		sensorId = sensor.getSensorId();
 		command = formatInitString(sensor);
-		waitForReply = true;
+//		waitForReply = true;
 		return this;
 	}
 
@@ -242,11 +240,11 @@ public abstract class SensorBase implements Command{
 		type = sensor.getSensorType();
 		sensorId = sensor.getSensorId();
 		command = START_MARKER + OK_CMD + type.getType() + sensor.getSensorId() + END_MARKER;
-		waitForReply = false;
+//		waitForReply = false;
 		return this;
 	}
 
-	public boolean go() {
+	public boolean go(boolean waitForReply) {
 		Boolean success = true;
 		try {
 

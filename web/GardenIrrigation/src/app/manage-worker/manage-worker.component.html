@@ -1,0 +1,95 @@
+<div *ngIf="errorMessage" class="alert alert-danger" [innerHTML]="errorMessage"></div>
+
+<form [formGroup]="workerForm" (ngSubmit)="submit()">
+    <div class="row">
+        <div class="col-md-5">
+            <div class="form-group">
+                <label for="nameid"><strong>Name</strong></label>
+                <input type="text" class="form-control" id="nameid" required maxlength="30" formControlName="w_name"
+                    [ngClass]="{'is-invalid':   formVal.w_name.errors && ( (formVal.w_name.touched || formVal.w_name.dirty) || submitted ) }">
+                <div *ngIf="formVal.w_name.errors && ( (formVal.w_name.touched || formVal.w_name.dirty) || submitted )"
+                    class="alert alert-danger">
+                    <div *ngIf="formVal.w_name.errors?.required">Enter a name</div>
+                    <div *ngIf="formVal.w_name.errors?.maxlength">Cannot be more than 30 characters</div>
+                    <div *ngIf="formVal.w_name.errors?.minlength">Name needs to be more than 1 character</div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="schedTypeId"><strong>Schedule Type</strong></label>
+                <select formControlName="w_scheduleType" class="form-control" id="psEnd" style="max-width: 200px">
+                    <option value="" >Select schedule type</option>
+                    <option *ngFor="let sched of listOfSchedule" [value]="sched.type">{{sched.scheduleName}}</option>
+                </select>
+                <div *ngIf="formVal.w_scheduleType.errors && ( (formVal.w_scheduleType.touched || formVal.w_scheduleType.dirty) || submitted )"
+                class="alert alert-danger">
+                <div>Please select a schedule type</div>
+            </div>
+            </div>
+            <div class="form-group">
+                <label for="Start Date"><strong>Watering start</strong></label>
+                <div class="input-group">
+
+                    <input type="text" class="form-control" placeholder="yyyy-mm-dd" formControlName="w_wateringDate"
+                        ngbDatepicker #d="ngbDatepicker" style="max-width: 180px" (change)="validateDate()">
+                    <div class="input-group-append">
+                        <button class="btn btn-outline-secondary calendar" (click)="d.toggle()" type="button">
+                            <fa-icon [icon]="faCalendarAlt"></fa-icon>
+                        </button>
+                    </div>
+                </div>
+                <ngb-timepicker formControlName="w_wateringTime"></ngb-timepicker>
+            </div>
+            <div class="form-group">
+                <label for="durId"><strong>Water duration (in minutes)</strong></label>
+                <input type="text" class="form-control" id="durId" required maxlength="5" formControlName="w_duration"
+                    style="max-width: 80px"
+                    [ngClass]="{'is-invalid':   formVal.w_duration.errors && ( (formVal.w_duration.touched || formVal.w_duration.dirty) || submitted ) }">
+                <div *ngIf="formVal.w_duration.errors && ( (formVal.w_duration.touched || formVal.w_duration.dirty) || submitted )"
+                    class="alert alert-danger">
+                    <div *ngIf="formVal.w_duration.errors?.required">Provide a duration for watering</div>
+                    <div *ngIf="formVal.w_duration.errors?.pattern">Needs numeric value</div>
+                    <div *ngIf="formVal.w_duration.errors?.min">Needs to be greater than 0</div>
+                    <div *ngIf="formVal.w_duration.errors?.max">Cannot be greater than 1440 Minutes ( 24 hours)</div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="descriptionId"><strong>Description:</strong></label>
+                <textarea class="form-control " id="descriptionId" placeholder="Description" size="20"
+                    formControlName="w_description" rows="3"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="sensorFkId"><strong>Garden worker</strong></label>
+
+                
+                <select formControlName="w_sensorId" class="form-control" id="sensorFkId" style="max-width: 200px">
+                    <ng-template [ngIf]="action === 'edit' " [ngIfElse]="addAction">                       
+                        <option [value]="worker.sensorIdFk">{{worker.sensorIdFk}}</option>
+                      </ng-template>                      
+                      <ng-template #addAction>
+                        <option value="" disabled>Select Garden worker</option>
+                        <option *ngFor="let sensor of unassignedSensors" [value]="sensor.id">{{sensor.sensorId}}</option>
+                      </ng-template>                  
+                </select>
+
+         
+
+
+                <div *ngIf="formVal.w_sensorId.errors && ( (formVal.w_sensorId.touched || formVal.w_sensorId.dirty) || submitted )"
+                    class="alert alert-danger">
+                    <div>Please select a worker to associate</div>
+                </div>
+            </div>
+
+        </div>
+
+
+
+    </div>
+
+    <button class="btn btn-primary" [disabled]="loading">
+        <div *ngIf="submitted && loading" class="spinner-border spinner-border-sm"></div>
+        Submit
+    </button>
+    <button class="btn btn-default" [disabled]="loading" (click)="cancelForm($event)">Cancel</button>
+</form>

@@ -8,19 +8,28 @@ import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { SideMenuComponent } from './side-menu/side-menu.component';
 import { TopMenuComponent } from './top-menu/top-menu.component';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { HttpClientModule } from '@angular/common/http';
+import {FormsModule, ReactiveFormsModule} from '@angular/forms';
+import { ManageWorkerComponent } from './manage-worker/manage-worker.component';
+import { WorkerListComponent } from './worker-list/worker-list.component'
 
 @NgModule({
   declarations: [
     AppComponent,
     MainPageComponent,
     SideMenuComponent,
-    TopMenuComponent
+    TopMenuComponent,
+    ManageWorkerComponent,
+    WorkerListComponent
   ],
   imports: [
     BrowserModule,
     AppRoutingModule,
     NgbModule,
-    FontAwesomeModule
+    FontAwesomeModule,
+    HttpClientModule,
+    FormsModule,
+    ReactiveFormsModule
   ],
   providers: [],
   bootstrap: [AppComponent]

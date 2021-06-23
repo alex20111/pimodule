@@ -1,8 +1,5 @@
 package net.pi.pimodule.service.model;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import org.glassfish.jersey.logging.LoggingFeature;
 import org.glassfish.jersey.server.ResourceConfig;
 
 public class JerseyConfiguration extends ResourceConfig {
