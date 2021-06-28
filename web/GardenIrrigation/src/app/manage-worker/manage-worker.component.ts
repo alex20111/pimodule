@@ -52,7 +52,7 @@ export class ManageWorkerComponent implements OnInit {
     },
       err => {
         console.log("error: ", err);
-        this.errorMessage = "Error";
+        this.errorMessage = err.error;
       });
 
     if ('edit' === this.action) {
@@ -64,6 +64,7 @@ export class ManageWorkerComponent implements OnInit {
       },
         err => {
           console.log("manage worker error: ", err);
+          this.errorMessage = err.error;
         });
     }
 
@@ -76,11 +77,11 @@ export class ManageWorkerComponent implements OnInit {
     if (workerData.wateringDate.length > 0) {
       //convert date to the model.
       //date: NgbDateStruct = { year: 2021, month: 6, day: 14 };
-      let wd = new Date(workerData.wateringDate);
+      let wd = new Date(Date.parse(workerData.wateringDate));
       console.log("wd  date: ", wd);
       this.dateModel.year = wd.getFullYear();
-      this.dateModel.day = wd.getDay();
-      this.dateModel.month = wd.getMonth();
+      this.dateModel.day = wd.getDate();
+      this.dateModel.month = wd.getMonth() + 1;
 
       this.time.hour = wd.getHours();
       this.time.minute = wd.getMinutes();
@@ -155,6 +156,7 @@ export class ManageWorkerComponent implements OnInit {
           console.log("err in update", err);
           this.loading = false; 
           this.submitted = false;
+          this.errorMessage = err.error;
         });
     } else {
       console.log("adding worker: ", wrk);
@@ -167,6 +169,7 @@ export class ManageWorkerComponent implements OnInit {
         err => {
           console.log("err in add", err);
           this.loading = false; this.submitted = false;
+          this.errorMessage = err.error;
         });
     }
   }

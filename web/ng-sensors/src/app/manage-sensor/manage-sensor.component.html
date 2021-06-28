@@ -20,9 +20,7 @@
             </div>
 
             <div class="form-group ">
-                <label for="locId"><strong>Sensor Location:</strong></label>
-
-                
+                <label for="locId"><strong>Sensor Location:</strong></label>                
                     <!-- -->
                     <select *ngIf="sensor.sensorLocation.id === -1" formControlName="s_location_id"
                         class="form-control" id="locId" style="max-width: 150px">
@@ -34,9 +32,7 @@
                     <button *ngIf="sensor.sensorLocation.id > 0" class="btn btn-danger btn-sm ml-3"
                         (click)="deleteLocationRelation($event)" [disabled]="loading">
                         <fa-icon [icon]="faTrashAlt"></fa-icon>
-                    </button>
-      
-
+                    </button>      
             </div>
 
             <div class="form-check mt-2">

@@ -63,6 +63,13 @@ public class GardenThread implements Runnable{
 							new GardenSensor(we).turnOffWater();
 							//reset new start date
 							resetStartWateringDate(we, currWateringDate);
+						}else if(now.isAfter(finishedDateTime)) {
+							
+							LocalDateTime newDate = now.withHour(currWateringDate.getHour()).withMinute(currWateringDate.getMinute());
+							
+							logger.debug("Now is after finising date " + we.getName() + " new date: " + newDate);
+							
+							resetStartWateringDate(we, newDate);
 						}
 					}catch(Exception ex) {
 						logger.error("Error processing sensor in Garden Thread: ", ex);
@@ -88,6 +95,18 @@ public class GardenThread implements Runnable{
 			
 		}else if (schedule == ScheduleType.TWO_DAYS) {
 			LocalDateTime newWateringDate = currWateringDate.plusDays(2);
+			we.setWateringDate(newWateringDate.format(Constants.DATE_FORMATTER));
+			
+		}else if (schedule == ScheduleType.THREE_DAYS) {
+			LocalDateTime newWateringDate = currWateringDate.plusDays(3);
+			we.setWateringDate(newWateringDate.format(Constants.DATE_FORMATTER));
+			
+		}else if (schedule == ScheduleType.FOUR_DAYS) {
+			LocalDateTime newWateringDate = currWateringDate.plusDays(4);
+			we.setWateringDate(newWateringDate.format(Constants.DATE_FORMATTER));
+			
+		}else if (schedule == ScheduleType.WEEK) {
+			LocalDateTime newWateringDate = currWateringDate.plusDays(7);
 			we.setWateringDate(newWateringDate.format(Constants.DATE_FORMATTER));
 			
 		}

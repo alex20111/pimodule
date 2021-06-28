@@ -91,6 +91,7 @@ export class WorkerStatus {
   watering: boolean = false;
   doNotWater: boolean = false;
   lastUpdate: string = "";
+  alive: boolean = false;
 }
 
 export enum ScheduleType {

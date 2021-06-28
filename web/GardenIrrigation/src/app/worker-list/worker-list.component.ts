@@ -27,7 +27,7 @@ export class WorkerListComponent implements OnInit {
     },
       err => {
         console.log("error in list workers:", err);
-        this.resultError = "error";
+        this.resultError = err.error;
       });
   }
 
@@ -44,6 +44,7 @@ export class WorkerListComponent implements OnInit {
      }, 
      err => {
        console.log("worker list delete error" , err);
+       this.resultError = err.error;
      });
     }
   }
@@ -54,6 +55,14 @@ export class WorkerListComponent implements OnInit {
     if (scheduleType == ScheduleType.DAILY){
       // console.log("daily")
       return "Daily";
+    }else if (scheduleType == ScheduleType.TWO_DAYS){
+      return "Every 2 days";
+    }else if (scheduleType == ScheduleType.THREE_DAYS){
+      return "Every 3 days";
+    }else if (scheduleType == ScheduleType.FOUR_DAYS){
+      return "Every 4 days";
+    }else if (scheduleType == ScheduleType.WEEK){
+      return "Every week";
     }
 
     return "none";

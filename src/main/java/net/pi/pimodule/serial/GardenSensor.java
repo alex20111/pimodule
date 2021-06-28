@@ -71,6 +71,24 @@ public class GardenSensor extends SensorBase {
 			}else if(sensorData.getCommand().equals(INIT_CMD)) { //different from base				
 				//				//send init data to sensor
 				super.handleInitCommand(sensorData);
+				if (sensorData != null) {
+					//get if we recieved a status.
+					int ws = 0;
+					boolean waterOn = false;
+					try {
+						ws = Integer.parseInt(sensorData.getData().substring(2,sensorData.getData().length()));
+
+						if (ws == 1){
+							waterOn = true;
+						}
+
+					}catch(NumberFormatException nfx) {
+						logger.debug("No status in the sensor data in handleInitCommand");
+					}
+
+					updateWorkerStatus(sensorData, waterOn, true);
+
+				}
 
 			}else if (sensorData.getCommand().startsWith(SEND_CMD)) {// recieve a reply to the send command
 				logger.debug("Send command recieved:  " + sensorData);
@@ -80,28 +98,14 @@ public class GardenSensor extends SensorBase {
 
 				}else {
 					gardenSensorReply.offer(true);
-					SensorEntity se = new SensorSql().findSensor(SensorType.GARDEN, sensorData.getSensorId());
 
-					if (se != null) {
-						GardenWorkerEntity gw = new GardenSql().findWorkerBySensorId(se.getId());
-
-						if (gw != null) {
-
-							boolean waterOn = false;
-							if ("1".equals(sensorData.getData())){
-								waterOn = true;
-							}
-
-							updateWorkerStatus(gw, waterOn);
-						}else {
-							logger.info("Garder worker not found for sensor update: " + sensorData);
-							//TODO generate error to UI
-						}
-
-					}else {
-						logger.info("Sensor not found for garden worker status update: " + sensorData);
-						//TODO generate error to UI
+					boolean waterOn = false;
+					if ("1".equals(sensorData.getData())){
+						waterOn = true;
 					}
+
+					updateWorkerStatus(sensorData, waterOn, true);
+
 				}
 			}
 
@@ -137,18 +141,16 @@ public class GardenSensor extends SensorBase {
 				cmd.append(TURN_ON);
 				cmd.append(END_MARKER);
 
-
 				try {
 					Boolean answer = waitForWorkerAnswer(cmd.toString());
 
-
 					if (answer != null && answer.booleanValue() == true) {
 
-						updateWorkerStatus(we, true);
+						updateWorkerStatus(we, true, true);
 						return true;
-
 					}else {
 						logger.debug("No replies from the garden worker - Turn On: " + we.getId());
+						updateWorkerStatus(we, false, false);
 						return false;
 					}
 				} catch (InterruptedException e) {
@@ -191,21 +193,22 @@ public class GardenSensor extends SensorBase {
 				cmd.append(TURN_OFF);
 				cmd.append(END_MARKER);
 
-					try {
-						Boolean answer = waitForWorkerAnswer(cmd.toString());
+				try {
+					Boolean answer = waitForWorkerAnswer(cmd.toString());
 
-						if (answer != null && answer.booleanValue() == true) {
+					if (answer != null && answer.booleanValue() == true) {
 
-							updateWorkerStatus(we, false);
-							return true;
+						updateWorkerStatus(we, false, true);
+						return true;
 
-						}else {
-							logger.debug("No replies from the garden worker - Turn Off: " + we.getId());
-						}
-					} catch (InterruptedException e) {
-						logger.debug("gardenSensorReply interrupted: " , e);
+					}else {
+						logger.debug("No replies from the garden worker - Turn Off: " + we.getId());
+						updateWorkerStatus(we, false, false);
 					}
-				
+				} catch (InterruptedException e) {
+					logger.debug("gardenSensorReply interrupted: " , e);
+				}
+
 			}else {
 				throw new NoSuchElementException("No sensor exist. Sensor ID requested: " + we.getSensorIdFk());
 			}
@@ -233,18 +236,19 @@ public class GardenSensor extends SensorBase {
 				cmd.append(STATUS);
 				cmd.append(END_MARKER);
 
-					try {
-						Boolean answer = waitForWorkerAnswer(cmd.toString());
+				try {
+					Boolean answer = waitForWorkerAnswer(cmd.toString());
 
-						if (answer != null && answer.booleanValue() == true) { 
-							return true;
-						}else {
-							logger.debug("No replies from the garden worker - Status: " + we.getId());
-						}
-					} catch (InterruptedException e) {
-						logger.debug("gardenSensorReply interrupted: " , e);
+					if (answer != null && answer.booleanValue() == true) { 
+						return true;
+					}else {
+						logger.debug("No replies from the garden worker - Status: " + we.getId());
+						updateWorkerStatus(we, false, false);
 					}
-				
+				} catch (InterruptedException e) {
+					logger.debug("gardenSensorReply interrupted: " , e);
+				}
+
 			}else {
 				throw new NoSuchElementException("No sensor exist. Sensor ID requested: " + we.getSensorIdFk());
 			}
@@ -267,70 +271,47 @@ public class GardenSensor extends SensorBase {
 		return gardenSensorReply.poll(4000, TimeUnit.MILLISECONDS);
 	}
 
+	private void updateWorkerStatus(SensorData sd,  boolean waterOn, boolean alive) throws ClassNotFoundException, SQLException {
+		logger.debug("updateWorkerStatus: SensorData: " + sd + " Water on: " + waterOn);
+		SensorEntity se = new SensorSql().findSensor(SensorType.GARDEN, sd.getSensorId());
+
+		if (se != null) {
+			GardenWorkerEntity gw = new GardenSql().findWorkerBySensorId(se.getId());
+
+			if (gw != null) {
+				this.updateWorkerStatus(gw,  waterOn, alive);
+
+			}else {
+				logger.info("Garder worker not found for sensor update: " + sd);
+				//TODO generate error to UI
+			}
+
+		}else {
+			logger.info("Sensor not found for garden worker status update: " + sd);
+			//TODO generate error to UI
+		}
+	}
+
 	@SuppressWarnings("unchecked")
-	private void updateWorkerStatus(GardenWorkerEntity we, boolean waterOn) {
+	private void updateWorkerStatus(GardenWorkerEntity we, boolean waterOn, boolean alive) {
 		Map<Integer, WorkerStatus> wStat = (Map<Integer, WorkerStatus>) SharedData.getInstance().getSharedObject(Constants.WORKERS_STATUS);
-		
+
 		if (wStat == null) {
 			wStat = new HashMap<>();
 		}
-		
+
 		WorkerStatus wsStatus = wStat.get(we.getId());
-		
+
 		if (wsStatus == null) {
 			wsStatus = new WorkerStatus();
 		}
-		
+
 		wsStatus.setWatering(waterOn);
 		wsStatus.setLastUpdate(LocalDateTime.now().format(Constants.DATE_FORMATTER));
 		wsStatus.setWorkerId(we.getId());
+		wsStatus.setAlive(alive);
 		wStat.put(we.getId(), wsStatus);
 
 		SharedData.getInstance().putSharedObject(Constants.WORKERS_STATUS, wStat);
 	}
-
-
-
-
-	//  <dp091232-3.43> =  1 = cmd, 2= sensor type, 3-6 = id, 7 to end = data
-	//	
-	//	Start sequence:
-	//
-	//		Start (turn on power , init no ID or if button pressed down at start ( to gen a new ID) : 
-	//			Sensor: no Id, generate ID with AA in fromt: AA9. Wait 2 min max for config parameters. if not sleep   SENT: <spAA5>
-	//			Master: Get a AA9 ID,  it's a new Sensor without id. Generate a new one and store it on the DB. then send the ID : AA9 and the new ID after 012.   SENT: <spAA5,001>
-	//					if it's a new ID, then send request to wait for init parameters.
-	//			Sensor: Get Init reply with ID AA9. The sensor know that it's the one it sent. look after for the real ID and store it in EEPROM.
-	//					If master request init parametes, wait for 5 min then sleep
-	//			Master: Send init parameters. SENT: <ip001,1616162330,65,59,4,3600> 
-	//			
-	//			
-	//			
-	//		Start ID EXIST: 
-	//			Sensor: Send it's ID to the master.. Wait 2 min max for config parameters, if not , sleep
-	//			Master: Get the ID, send the init parameters.
-	//			Sensor: Get parameters, start.
-	//			
-	//		Normal flow (when all init done)
-	//			Sensor: send data with sensor id.
-	//			Master: send ok with sensor id. If new init parameters , send it with the reply
-	//			
-	//			
-	//			
-	//			
-	//		Sensor with ID example:
-	//			Sensor: <ip091>
-	//			Master: <ip091,1616162330,65,11,4,3600> 
-	//		 
-	//		 
-	//		 Sensor without ID example:
-	//			Sensor: <spAA5>
-	//			Master: <spAA5,091>
-	//			Sensor: <sp091ok>
-	//			Master: <ip091,1616162330,65,11,4,3600> 
-
-	// Sensor data:
-	//	Sensor: <dp091232-3.43> 
-	// master <op091>
-
 }

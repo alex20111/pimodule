@@ -1,24 +1,33 @@
 import { GardenService, GardenWorker } from './../services/garden.service';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 
-import { faPowerOff } from '@fortawesome/free-solid-svg-icons';
+import { faPowerOff, faWifi } from '@fortawesome/free-solid-svg-icons';
+import { Subscription, timer } from 'rxjs';
+import { mergeMap } from 'rxjs/operators';
 @Component({
   selector: 'app-main-page',
   templateUrl: './main-page.component.html',
   styleUrls: ['./main-page.component.css']
 })
-export class MainPageComponent implements OnInit {
+export class MainPageComponent implements OnInit, OnDestroy {
   isMenuCollapsed: boolean = false;
   // doNextCall: boolean = true;
   allWorkers: GardenWorker[] = [];
+  allWorkersTimer: Subscription | undefined;
 
   loadingAllWorkers : boolean = true;
   submitWaterLoading: boolean = false;
 
   faPowerOff = faPowerOff;
+  faWifi = faWifi;
 
 
   constructor(private gardenService: GardenService) { }
+  ngOnDestroy(): void {
+    if (this.allWorkersTimer){
+      this.allWorkersTimer.unsubscribe();
+    }
+  }
 
 
 
@@ -33,16 +42,18 @@ export class MainPageComponent implements OnInit {
     // const squareOdd = squareOddVals(nums);
 
     // squareOdd.subscribe(x => console.log(x));
-    this.gardenService.loadAllWorkers().subscribe(data => {
-      this.allWorkers = data;
-      console.log("Main page data: ", data);
-      this.loadingAllWorkers = false;
 
-    },
-      err => {
-        console.log("Main page error: ", err);
+    this.allWorkersTimer = timer(0, 5000).
+    pipe(
+      mergeMap(() => this.gardenService.loadAllWorkers())).subscribe(data => {
+        this.allWorkers = data;
+        console.log("Main page data: ", data);
         this.loadingAllWorkers = false;
-      })
+  },
+    err => {
+      console.log("Main page error: ", err);
+        this.loadingAllWorkers = false;
+    });
 
   }
 

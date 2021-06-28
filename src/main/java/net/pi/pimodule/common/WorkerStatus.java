@@ -7,6 +7,7 @@ public class WorkerStatus {
 	private boolean watering = false;
 	private boolean doNotWater = false;
 	private String lastUpdate = "";
+	private boolean alive = false;
 	
 	
 	public boolean isWatering() {
@@ -33,9 +34,16 @@ public class WorkerStatus {
 	public void setDoNotWater(boolean doNotWater) {
 		this.doNotWater = doNotWater;
 	}
+	public boolean isAlive() {
+		return alive;
+	}
+	public void setAlive(boolean alive) {
+		this.alive = alive;
+	}
 	@Override
 	public String toString() {
-		return "WorkerStatus [workerId=" + workerId + ", watering=" + watering + ", lastUpdate=" + lastUpdate + "]";
+		return "WorkerStatus [workerId=" + workerId + ", watering=" + watering + ", doNotWater=" + doNotWater
+				+ ", lastUpdate=" + lastUpdate + ", alive=" + alive + "]";
 	}
 
 }

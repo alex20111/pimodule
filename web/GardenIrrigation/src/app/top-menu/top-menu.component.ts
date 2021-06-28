@@ -32,12 +32,16 @@ export class TopMenuComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
 
 
-    this.newWorkerTimer = timer(0, 10000).pipe(mergeMap(() => this.gardenService.loadAllUnassignedSensors())).subscribe(data => {
+
+     this.newWorkerTimer = timer(0, 10000).
+      pipe(
+        mergeMap(() => this.gardenService.loadAllUnassignedSensors())).subscribe(data => {
       console.log("Unassigned sensors Data: ", data);
       this.newSensors = data;
     },
       err => {
-        console.log("error: ", err)
+        console.log("error: ", err);
+        // this.errorMessage = err.error;
       });
   }
 

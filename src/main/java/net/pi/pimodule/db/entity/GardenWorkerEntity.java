@@ -103,7 +103,7 @@ public class GardenWorkerEntity {
 	public String toString() {
 		return "GardenWorkerEntity [id=" + id + ", name=" + name + ", scheduleType=" + scheduleType + ", wateringDate="
 				+ wateringDate + ", wateringDuration=" + wateringDuration + ", description=" + description
-				+ ", sensorIdFk=" + sensorIdFk + ", "
+				+ ", sensorIdFk=" + sensorIdFk + ", WorketStatus: " + status
 						+ "]";
 	}
 }
