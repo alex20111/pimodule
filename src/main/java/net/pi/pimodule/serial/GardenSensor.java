@@ -71,7 +71,7 @@ public class GardenSensor extends SensorBase {
 			}else if(sensorData.getCommand().equals(INIT_CMD)) { //different from base				
 				//				//send init data to sensor
 				super.handleInitCommand(sensorData);
-				if (sensorData != null) {
+				if (sensorData != null && sensorData.getData() != null && sensorData.getData().length() > 0) {
 					//get if we recieved a status.
 					int ws = 0;
 					boolean waterOn = false;

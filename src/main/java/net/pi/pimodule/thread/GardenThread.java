@@ -53,16 +53,25 @@ public class GardenThread implements Runnable{
 
 					try {
 						if(now.isAfter(currWateringDate) && now.isBefore(finishedDateTime)  
-								&& !status.isDoNotWater()
-								&& !status.isWatering()) {
+//								&& !status.isDoNotWater()
+								&& !status.isWatering() && !status.isScheduleWatering()) {
+							
+							
 							logger.debug("Watering for worker: " + we.getName());
 							new GardenSensor(we).turnOnWater();
+							status.setScheduleWatering(true);;
+							wStat.put(we.getId(), status);
+							
 						}else if(now.isAfter(finishedDateTime) && status.isWatering()){
 							logger.debug("Turn off watering for worker: " + we.getName());
 							//if time has finished .. shut down
 							new GardenSensor(we).turnOffWater();
 							//reset new start date
 							resetStartWateringDate(we, currWateringDate);
+							
+							status.setScheduleWatering(false);;
+							wStat.put(we.getId(), status);
+							
 						}else if(now.isAfter(finishedDateTime)) {
 							
 							LocalDateTime newDate = now.withHour(currWateringDate.getHour()).withMinute(currWateringDate.getMinute());
@@ -70,6 +79,8 @@ public class GardenThread implements Runnable{
 							logger.debug("Now is after finising date " + we.getName() + " new date: " + newDate);
 							
 							resetStartWateringDate(we, newDate);
+							status.setScheduleWatering(false);;
+							wStat.put(we.getId(), status);
 						}
 					}catch(Exception ex) {
 						logger.error("Error processing sensor in Garden Thread: ", ex);
@@ -114,6 +125,8 @@ public class GardenThread implements Runnable{
 		gardenSql.updateWorker(we);
 		
 	}
+	
+	
 
 
 

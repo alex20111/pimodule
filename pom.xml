@@ -140,6 +140,7 @@
 					<excludes>
 						<exclude>ng-sensors/**</exclude>
 						<exclude>weather/**</exclude>
+						<exclude>GardenIrrigation/**</exclude>
 					</excludes>
 				</configuration>
 			</plugin>
@@ -151,6 +152,7 @@
 					<excludes>
 						<exclude>ng-sensors/**</exclude>
 						<exclude>weather/**</exclude>
+						<exclude>GardenIrrigation/**</exclude>
 					</excludes>
 				</configuration>
 			</plugin>
@@ -210,6 +212,23 @@
 							<goal>exec</goal>
 						</goals>
 					</execution>
+					
+					<execution>
+						<id>exec-npm-ng-build-garden</id>
+						<phase>generate-sources</phase>
+						<configuration>
+							<workingDirectory>${project.basedir}/web/GardenIrrigation</workingDirectory>
+							<executable>ng</executable>
+							<arguments>
+								<argument>build</argument>
+								<argument>--base-href=/garden/</argument>
+							</arguments>
+						</configuration>
+						<goals>
+							<goal>exec</goal>
+						</goals>
+					</execution>
+					
 				</executions>
 			</plugin>
 		</plugins>
